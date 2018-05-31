@@ -1,0 +1,7 @@
+:host{
+    display: block;
+    overflow: auto;
+}
+.msg-container{
+    background-color: #f1f4f6;
+}

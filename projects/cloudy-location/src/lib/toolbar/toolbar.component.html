@@ -1,0 +1,50 @@
+<!-- <div class="form">
+  <input type="search" class="form-control border-0" placeholder={{SearchName}}/>
+</div> -->
+
+<div class="form-inline h-100">
+  <!-- categrate -->
+  <div class="form-check form-check-inline border-left h-100" *ngFor="let cate of MainPageCates" style="width:180px;padding:0 20px;">
+    <input type="checkbox" (change)="cate.visable=!cate.visable;FilterChanged();" [checked]="cate.visable" class="form-check-input"
+      id="{{cate.code}}_checkbox" style="width:18px;height:18px;" />
+    <div class="cate-icon rounded-circle" [style.backgroundColor]="cate.color">
+      <i class={{cate.class}}></i>
+    </div>
+    <label class="form-check-label" for="{{cate.code}}_checkbox" style="font-size:14px;color:#2c2336;font-weight:bold;">{{cate.title}}({{cate.count||0}})</label>
+  </div>
+  <div class="form-group border-left px-2 h-100">
+    <button class="btn btn-sm" (click)="OpenAdvancedSearch()">高级搜索</button>
+  </div>
+</div>
+<div class="form-inline ml-auto h-100">
+  <div class="form-group h-100" style="width:140px;">
+    <i class="fa fa-clock-o" aria-hidden="true"></i>
+    <label class="timer" style="padding:0 10px;">{{Timer}}</label>
+  </div>
+  <div style="width:62px;cursor: pointer;" class="form-group h-100 border-left d-flex justify-content-center" (click)="OpenSetting();">
+    <i class="fa fa-cog" style="font-size:22px" aria-hidden="true"></i>
+  </div>
+</div>
+
+<!-- 
+<ng-template #setting>
+  <div class="modal-header tips-modal-header">
+    <h4 class="modal-title pull-left">设置</h4>
+    <button type="button" class="close pull-right" aria-label="Close" (click)="SettingModalRef.hide();">
+      <span aria-hidden="true">×</span>
+    </button>
+  </div>
+  <div class="modal-body tips-modal-body">
+    <div class="tips-contain form container">
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="form-check m-1">
+            <a href="javascript:void(0);" (click)="ShowUnconnected();">未上线设备</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-template>
+
+<div #unconnected></div> -->

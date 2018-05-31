@@ -17,8 +17,11 @@
       "dom"
     ],
     "paths": {
-      "LocationLib": [
-        "dist/location-lib"
+      "cl": [
+        "dist/cloudy-location"
+      ],
+      "component-lib": [
+        "dist/component-lib"
       ]
     }
   }

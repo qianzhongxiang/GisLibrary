@@ -1,0 +1,25 @@
+.btn{
+    background-color: #ee660e;
+    border-color: #ee660e;
+    color:#fff
+}
+.fa-cog{
+    color:#ee660e;
+}
+.cate-icon{
+    width:22px;
+    height:22px;
+    text-align: center;
+    margin: 0 6px;
+}
+.cate-icon i{
+    color:#fff;
+}
+
+:host{
+    position: absolute;
+    height: 46px;
+    border-color: #ee660e;
+    width: 100%;
+    font-family: "Gill Sans", sans-serif;
+}

@@ -1,0 +1,63 @@
+<mat-dialog-title>
+    高级筛选
+</mat-dialog-title>
+<mat-dialog-content>
+    <div class="tips-contain form container">
+        <div class="row">
+            <div class="col-sm-4" *ngFor="let cate of TempCates">
+                <div class="form-check m-1">
+                    <input type="checkbox" [checked]="cate.visable" (change)="cate.visable=!cate.visable" class="form-check-input" id="t_{{cate.code}}_checkbox"
+                        style="width:18px;height:18px;" />
+                    <label class="form-check-label" for="t_{{cate.code}}_checkbox" style="font-size:18px;color:#2c2336;font-weight:bold;">{{cate.title}}({{cate.count||0}})</label>
+                </div>
+            </div>
+        </div>
+        <div class="border"></div>
+        <div class="row">
+            <div class="col-sm-4" *ngFor="let cate of TempCatesDetailed">
+                <div class="form-check m-1">
+                    <input type="checkbox" [checked]="cate.visable" (change)="cate.visable=!cate.visable" class="form-check-input" id="td_{{cate.code}}_checkbox"
+                        style="width:14px;height:14px;" />
+                    <label class="form-check-label" for="td_{{cate.code}}_checkbox" style="font-size:14px;color:#2c2336;font-weight:bold;">{{cate.title}}({{cate.count||0}})</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</mat-dialog-content>
+<mat-dialog-actions>
+    <button mat-button (click)="AdvancedSearchSave();">确定</button>
+    <button mat-button mat-dialog-close>取消</button>
+</mat-dialog-actions>
+<!-- <div class="modal-header tips-modal-header">
+    <h4 class="modal-title pull-left">高级筛选</h4>
+    <button type="button" class="close pull-right" aria-label="Close" (click)="ModalRef.hide();">
+        <span aria-hidden="true">×</span>
+    </button>
+</div>
+<div class="modal-body tips-modal-body">
+    <div class="tips-contain form container">
+        <div class="row">
+            <div class="col-sm-4" *ngFor="let cate of TempCates">
+                <div class="form-check m-1">
+                    <input type="checkbox" [checked]="cate.visable" (change)="cate.visable=!cate.visable" class="form-check-input" id="t_{{cate.code}}_checkbox"
+                        style="width:18px;height:18px;" />
+                    <label class="form-check-label" for="t_{{cate.code}}_checkbox" style="font-size:18px;color:#2c2336;font-weight:bold;">{{cate.title}}({{cate.count||0}})</label>
+                </div>
+            </div>
+        </div>
+        <div class="border"></div>
+        <div class="row">
+            <div class="col-sm-4" *ngFor="let cate of TempCatesDetailed">
+                <div class="form-check m-1">
+                    <input type="checkbox" [checked]="cate.visable" (change)="cate.visable=!cate.visable" class="form-check-input" id="td_{{cate.code}}_checkbox"
+                        style="width:14px;height:14px;" />
+                    <label class="form-check-label" for="td_{{cate.code}}_checkbox" style="font-size:14px;color:#2c2336;font-weight:bold;">{{cate.title}}({{cate.count||0}})</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-default" (click)="AdvancedSearchSave();">确定</button>
+    <button type="button" class="btn btn-default" (click)="ModalRef.close();">取消</button>
+</div> -->

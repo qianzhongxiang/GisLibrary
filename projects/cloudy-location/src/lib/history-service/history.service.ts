@@ -45,12 +45,13 @@ export class HistoryService {
    * @param eTime 
    * @param callback 
    */
-  public GetData(uid: string, type: string, sTime: Date, eTime: Date, callback?: (data: Array<DataItem>) => void) {
-    let res: Location;
-    let url = this.Config.webService + `/HistoryGet?callback=?`
+  public GetData(datas: Array<{ uid: string, type: string, sTime: string, eTime: string }>, callback?: (data: Array<DataItem>) => void) {
+    let res: Location, url = this.Config.webService + `/HistoryGet?callback=?`
+      , dataIndex = 0, index = 1, count = 200;
     this.Data = [];
+
     // let postdata = { uid: uid, type: type, stime: sTime.toISOString(), etime: eTime.toISOString(), index: 1, count: 200 };
-    let postdata = { uid: "352544071943238", type: "SF", stime: sTime.toISOString(), etime: eTime.toISOString(), index: 1, count: 200 };
+    let postdata = Object.assign(datas[dataIndex], { index: index, count: count });// { uid: "352544071943238", type: "SF", stime: sTime.toISOString(), etime: eTime.toISOString(), index: 1, count: 200 };
     let cb = ((d) => {
       if (typeof d === "string") d = JSON.parse(d);
       this.Data = this.Data.concat(d);
@@ -58,6 +59,9 @@ export class HistoryService {
       this.callbacks.forEach(c => c(d));
       if ((d as Array<any>).length >= postdata.count) {
         postdata.index++;
+        this.Jsonp(url, postdata, cb)
+      } else if (datas[++dataIndex]) {
+        postdata = Object.assign(datas[dataIndex], { index: index, count: count });
         this.Jsonp(url, postdata, cb)
       }
     }).bind(this);

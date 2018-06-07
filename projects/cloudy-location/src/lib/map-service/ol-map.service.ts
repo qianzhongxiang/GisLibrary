@@ -1,7 +1,8 @@
 import { MapConifg } from './../../utilities/config';
-import { LogHelper } from 'vincijs';
+import { LogHelper, Ajax } from 'vincijs';
 import { Injectable } from '@angular/core';
 import { ContextMenu_Super } from './../../utilities/ContextMenu_Super';
+import olFormatGeoJson from 'ol/format/GeoJson';
 import ol_Map from 'ol/map';
 import ol_style from 'ol/style/Style';
 import ol_stroke from 'ol/style/Stroke';
@@ -17,12 +18,13 @@ import ol_lineString from 'ol/geom/LineString';
 import ol_geometry from 'ol/geom/Geometry';
 import ol_draw from 'ol/interaction/Draw'
 import ol_select from 'ol/interaction/Select';
-// import aMapLayer from "./../../Maplayers/AMapLayer";
 import R_BG_Layer from "./../../layers/R_BG_Layer";
 import V_Roads_Layer from "./../../layers/V_Roads_Layer";
 import V_Distance_Layer from "./../../layers/V_Distance_Layer";
 import V_Marks_Layer from "./../../layers/V_Marks_Layer";
-import ol_PostionControl from 'ol/control/mouseposition'
+import ol_PostionControl from 'ol/control/mouseposition';
+import ol_box_selection from 'ol/interaction/DragBox'
+import ol_events_condition from 'ol/events/condition'
 
 @Injectable()
 export class OlMapService {
@@ -215,12 +217,81 @@ export class OlMapService {
       , items = interactions.getArray().filter(i => i.get("levelId") == id);
     if (items)
       items.forEach(i => this.Map.removeInteraction(i));
-    let s = new ol_select();
+    let s = new ol_select({
+      layers: [this.DrawL],
+      addCondition: ol_events_condition.click,
+      removeCondition: ol_events_condition.click,
+      condition: ol_events_condition.click,
+      multi: true
+    });
     s.on("select", (e: ol.interaction.Select.Event) => {
       callback(e.selected);
     })
     this.Map.addInteraction(s)
     return s;
+  }
+  /**
+   * to select features in given layers
+   * @param layers the given layers
+   * @param callback the function to handle given features 
+   * @param boxSelection the option with boolen type to launch box-selection. it is set true by default.
+   */
+  public SelectInLayer(layers: Array<ol.layer.Vector>, callback: (features: Array<ol.Feature>) => void, boxSelection: boolean = true): ol.interaction.Select {
+    let s = new ol_select({
+      layers: layers,
+      addCondition: ol_events_condition.click,
+      removeCondition: ol_events_condition.click,
+      condition: ol_events_condition.click,
+      multi: true
+    });
+    s.on("select", (e: ol.interaction.Select.Event) => {
+      callback(e.selected);
+    })
+    this.AddInteraction(s)
+    if (boxSelection) {
+      let fs = s.getFeatures();
+      let bs = new ol_box_selection({
+        condition: ol_events_condition.platformModifierKeyOnly
+        ,
+      });
+      bs.on('boxend', e => {
+        let extent = bs.getGeometry().getExtent()
+        layers.forEach(l => {
+          l.getSource().forEachFeatureIntersectingExtent(extent, f => {
+            if (fs.getArray().indexOf(f) == -1)
+              fs.push(f);
+          })
+        })
+        callback(fs.getArray());
+      })
+      this.AddInteraction(bs)
+    }
+    return s;
+  }
+
+  /**
+   * load wfs but be not added into map
+   * @param callback 
+   * @param gisServer 
+   * @param typeName 
+   * @param outputFormat is  'application/json' by default
+   * @param viewPramaters 
+   */
+  public LoadWfs(callback: (layer: ol.layer.Vector) => void, gisServer: string, typeName: string, outputFormat: string = 'application/json', viewPramaters?: string) {
+    let pams = `service=wfs&version=1.1.0&request=GetFeature&typeNames=${typeName}&outputFormat=${outputFormat}&${viewPramaters}`
+    new Ajax({ url: `${gisServer}/wfs?${pams}` }).done(json => {
+      let fs = new olFormatGeoJson().readFeatures(json);
+      if (fs && fs.length > 0) {
+        let layer = new ol_layer_vector({
+          source: new ol_source_vector(),
+          zIndex: 104,
+          style: () => [new ol_style({ stroke: new ol_stroke({ width: 6, color: "#04cf87" }) })]
+        });
+        layer.getSource().addFeatures(fs);
+        if (callback)
+          callback(layer);
+      }
+    })
   }
   /**
    * 

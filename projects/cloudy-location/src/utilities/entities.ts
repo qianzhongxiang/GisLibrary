@@ -1,3 +1,5 @@
+import { MsgType } from "./enum";
+
 export interface DataItem {
     X: number
     Y: number
@@ -7,13 +9,15 @@ export interface DataItem {
     Name: string
     UniqueId: string
     Duration: number
+    Offline: boolean
 }
 export interface AssetInfo {
+    Id: string
     Uid: string
     Title: string
     Color: string
     Type: string
-    Type_Id?: string
+    Id_Type?: string
     Category: string
 }
 export enum WSType {
@@ -44,4 +48,12 @@ export interface ICate {
 export interface ToolbarConfig {
     "items": Array<ICate>,
     "itemsDetailed": Array<ICate>
+}
+
+export interface MsgEntity {
+    MsgType: MsgType
+    SubType: string
+    Uid: string
+    DevType: string
+    Msg: string
 }

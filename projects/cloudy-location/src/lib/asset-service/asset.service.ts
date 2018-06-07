@@ -22,7 +22,7 @@ export class AssetService {
     new Ajax({ url: this.Url, data: {}, async: false }).done(d => {
       if (d && d.IsSuccess) {
         this.Assets = d.Data;
-        this.Assets.forEach(i => i.Type_Id = `${i.Type.toLowerCase()}_${i.Uid.toLowerCase()}`)
+        this.Assets.forEach(i => i.Id_Type = `${i.Uid.toLowerCase()}_${i.Type.toLowerCase()}`)
       }
     });
     this.Assets = this.Assets.sort((a, b) => {

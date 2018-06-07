@@ -58,6 +58,10 @@ class GraphicFactory implements IGraphicFactory {
 }
 
 export interface GraphicOutInfo {
+    /**
+     * Id_type
+     */
+    UniqueKey?: string
     Location: { x: number, y: number }
     Time?: Date | string
     ReveiveTime: Date
@@ -72,5 +76,6 @@ export interface GraphicOutInfo {
     Duration?: number
     Color?: string
     Visable?: boolean
+    Offline?: boolean
 }
 export let GetGraphicFactory: () => IGraphicFactory = Singleton(GraphicFactory, true);

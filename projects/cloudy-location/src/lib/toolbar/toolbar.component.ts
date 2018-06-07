@@ -1,3 +1,4 @@
+import { DeviceStatus } from './../../utilities/enum';
 import { ToolbarConfig, ICate, AssetInfo } from './../../utilities/entities';
 import { GraphicOutInfo } from './../../graphic/Graphic';
 import { DeviceService } from './../device-service/device.service';
@@ -12,26 +13,43 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dial
   styleUrls: ['./toolbar.component.css']
 })
 export class ToolbarComponent implements OnInit, AfterViewInit {
+  private offline: ICate
   ngAfterViewInit(): void {
     setInterval(() => { this.Timer = new Date().toLocaleTimeString() }, 1000)
-    this.Cates = this.Config.items;
-    this.CatesDetailed = this.Config.itemsDetailed;
+    this.Cates = [...this.Config.items,
+    this.offline = { title: "离线", code: "offline", visable: true, count: 0, color: "gray", mp: false, class: '' }];
+    this.CatesDetailed = this.Config.itemsDetailed
     this.MainPageCates = this.Cates.filter(c => c.mp).concat(this.CatesDetailed.filter(c => c.mp));
     if (this.DeviceService) {
       this.DeviceService.Bind(this.DeviceService.Events.DeviceUpdate, (msg) => {
-        var value: { data: GraphicOutInfo, type: "new" | "move" } = msg.Value
-        if (value.type == "new") {
-          let c = this.Cates.find(c => c.code == (value.data.type || "").toLowerCase())
-          if (c) c.count = (c.count || 0) + 1;
-          let info: { Category: string }
-          if (!this.AssetService) info = { Category: undefined };
-          else
-            info = this.AssetService.Get(value.data.Id, value.data.type) || { Category: undefined };
-          let cd = this.CatesDetailed.find(c => c.code == (info.Category || "").toLowerCase())
-          if (cd) cd.count = (cd.count || 0) + 1;
+        var value: { data: GraphicOutInfo, type: DeviceStatus } = msg.Value
+        switch (value.type) {
+          case DeviceStatus.New:
+            this.isdf(value.data.Id, value.data.type, 1)
+            break;
+          case DeviceStatus.Online:
+            this.isdf(value.data.Id, value.data.type, 1)
+            this.offline.count--;
+            break;
+          case DeviceStatus.Offline:
+            this.isdf(value.data.Id, value.data.type, -1);
+            this.offline.count++;
+            break;
+          case DeviceStatus.Move:
+            break;
+          default:
+            break;
         }
       })
     }
+  }
+  private isdf(id: string, type: string, count: number) {
+    let c = this.Cates.find(c => c.code == (type || "").toLowerCase())
+    if (c) c.count = (c.count || 0) + count;
+    let info: { Category: string } = { Category: undefined };
+    if (this.AssetService) info = this.AssetService.Get(id, type) || { Category: undefined };
+    let cd = this.CatesDetailed.find(c => c.code == (info.Category || "").toLowerCase())
+    if (cd) cd.count = (cd.count || 0) + count;
   }
   SearchName = "搜索资产名称"
   Timer: string
@@ -55,8 +73,8 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
   OpenAdvancedSearch() {
     // this.ModalRef = this.ModalService.show(template);
-    let ref = this.Dialog.open(FilterDialog, {
-      id: 'filterDialog', width: '25%'
+    let ref = this.Dialog.open(FilterDialogComponent, {
+      id: 'filterDialog', width: '50%', position: { top: "20px" }, disableClose: false
       , data: { CatesDetailed: this.CatesDetailed, Cates: this.Cates }
     });
     ref.afterClosed().subscribe((v) => {
@@ -73,6 +91,9 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       types.push([this.Cates[b].code, this.Cates[b].visable]);
     }
     this.DeviceService.SetShowItem((gif) => {
+      if (gif.Offline) {
+        return this.offline.visable;
+      }
       let i = this.AssetService.Get(gif.Id, gif.type)
       let catedVisable: boolean = true;
       if (i) {
@@ -117,13 +138,14 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
 @Component({
   templateUrl: 'filter.dialog.html',
-  selector: 'filter-dialog'
+  selector: 'filter-dialog',
+  styleUrls: ['filter.dialog.css']
 })
-class FilterDialog {
+export class FilterDialogComponent {
   TempCatesDetailed: Array<ICate>
   TempCates: Array<ICate>
-  constructor(public ModalRef: MatDialogRef<FilterDialog>,
-    @Inject(MAT_DIALOG_DATA) public data: { CatesDetailed: Array<ICate>, Cates: Array<ICate> }) {
+  constructor(public ModalRef: MatDialogRef<FilterDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any) {//{ CatesDetailed: Array<ICate>, Cates: Array<ICate> }
     this.TempCatesDetailed = this.data.CatesDetailed.map(c => Extend({}, c))
     this.TempCates = this.data.Cates.map(c => Extend({}, c))
   }

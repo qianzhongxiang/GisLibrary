@@ -14,25 +14,23 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.OlMapService.Show({ target: this.container.nativeElement })
   }
   @ViewChild("div") container: ElementRef
-  constructor(private OlMapService: OlMapService, private DeviceService: DeviceService, private AssetService: AssetService) { }
+  constructor(private OlMapService: OlMapService, @Optional() private DeviceService: DeviceService, @Optional() private AssetService: AssetService) { }
   public DeviceInit() {
     if (this.DeviceService) {
       this.OlMapService.AddLayer(this.DeviceService.GetLayer());
       this.DeviceService.Bind(this.DeviceService.Events.WSOpened, this.InitWSType.bind(this))
-      this.DeviceService.DataProcess((gif, type) => {
-        if (type == "new") {
-          let info = this.AssetService ? this.AssetService.Get(gif.Id, gif.type) : undefined;
-          if (!info) gif.Title = gif.Id;
-          else {
-            gif.Title = info.Title;
-            gif.Color = info.Color;
-          }
-        }
-        else if (type == "move") {
-
-        }
-        // this.Business.Update(type, gif);
-      })
+      this.DevPositionInit();
+      this.DeviceService.DataProcess(this.DataProcessCallback.bind(this))
+    }
+  }
+  private DataProcessCallback(gif, type) {
+    if (type == "new") {
+      let info = this.AssetService ? this.AssetService.Get(gif.Id, gif.type) : undefined;
+      if (!info) gif.Title = gif.Id;
+      else {
+        gif.Title = info.Title;
+        gif.Color = info.Color;
+      }
     }
   }
   ngOnInit() {
@@ -45,5 +43,9 @@ export class MapComponent implements OnInit, AfterViewInit {
   protected InitWSType() {
     //TODO InitWSParameters
     this.SendMsg({ Type: 1 });
+  }
+  private DevPositionInit() {
+    let as = this.AssetService.GetAssets().map(a => a.Id_Type);
+    this.DeviceService.DevPositionInit(as, this.DataProcessCallback.bind(this))
   }
 }

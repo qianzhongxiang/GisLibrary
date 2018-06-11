@@ -3,8 +3,12 @@
  */
 export * from './lib/map/index'
 export * from './lib/toolbar/index'
+export * from './lib/offline-asset/index'
 export * from './utilities/entities'
 export * from './utilities/Tracker'
+export * from './utilities/enum'
+export * from './graphic/Graphic'
+
 
 export * from './lib/map-service/ol-map.service';
 export * from './lib/device-service/device.service';

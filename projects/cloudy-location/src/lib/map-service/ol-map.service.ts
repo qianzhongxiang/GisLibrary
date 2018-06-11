@@ -300,7 +300,7 @@ export class OlMapService {
    * @param style 
    * @param id 
    */
-  public Draw(type: string, callback: (feature) => void, style?: ol.style.Style, id: string = "1"): ol.interaction.Interaction {
+  public Draw(type: string, callback: (feature) => void, style?: ol.style.Style, features?: Array<ol.Feature>, id: string = "1", multi: boolean = false): ol.interaction.Interaction {
     let source: ol.source.Vector;
     if (!this.DrawL) {
       this.DrawL = new ol_layer_vector({
@@ -313,6 +313,7 @@ export class OlMapService {
     else {
       source = this.DrawL.getSource();
     }
+
     let interactions = this.Map.getInteractions()
       , items = interactions.getArray().filter(i => i.get("levelId") == id);
     if (items)
@@ -332,11 +333,16 @@ export class OlMapService {
     draw.set("levelId", id)
     draw.on("drawend", (e: ol.interaction.Draw.Event) => {
       let f = e.feature;
-      this.Map.removeInteraction(draw)
+      if (!multi)
+        this.Map.removeInteraction(draw)
       callback(f);
     })
-
     this.Map.addInteraction(draw)
+    if (features) {
+      source.addFeatures(features);
+      if (!multi)
+        this.Map.removeInteraction(draw)
+    }
     return draw;
   }
 }

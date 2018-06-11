@@ -1,19 +1,21 @@
+import { OfflineAssetComponent } from './../offline-asset/offline-asset.component';
 import { MatDialogModule } from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button'
-import { ToolbarComponent, FilterDialogComponent } from './toolbar.component';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTableModule } from '@angular/material/table'
+import { ToolbarComponent, FilterDialogComponent, SettingDialogComponent } from './toolbar.component';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-// import { BrowserAnimationsModule, NoopAnimationsModule } from '@angular/platform-browser/animations'
 
 @NgModule({
   imports: [
     CommonModule,
     MatDialogModule,
-    MatButtonModule
+    MatButtonModule,
+    MatTableModule
   ],
-  exports: [ToolbarComponent, FilterDialogComponent],
-  declarations: [ToolbarComponent, FilterDialogComponent],
-  entryComponents: [FilterDialogComponent]
+  exports: [ToolbarComponent, FilterDialogComponent, SettingDialogComponent, OfflineAssetComponent],
+  declarations: [ToolbarComponent, FilterDialogComponent, SettingDialogComponent, OfflineAssetComponent],
+  entryComponents: [FilterDialogComponent, SettingDialogComponent, OfflineAssetComponent]
 })
 export class ToolbarModule {
   // static forRoot(ToolbarConfig: ToolbarConfig, assetProfileUrl: string, mapConfig: MapConifg): ModuleWithProviders {

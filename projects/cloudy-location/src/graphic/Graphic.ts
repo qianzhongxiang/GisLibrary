@@ -1,4 +1,4 @@
-import { Composit, Singleton } from "vincijs";
+import { Composit, Singleton, LogHelper } from "vincijs";
 import { BaseGeometry } from "./BaseGeometry";
 import { BaseMaterial } from "./BaseMaterial";
 // import { Tracker } from "../scene/Tracker";
@@ -37,14 +37,14 @@ export abstract class Graphic extends Composit {
 }
 export interface IGraphicFactory {
     GetComponent(name: string): Graphic
-    SetComponent(type): void
+    SetComponent(type: typeof Graphic, name?: string): void
 }
 class GraphicFactory implements IGraphicFactory {
     private Types = {}
     private Pool = {}
-    SetComponent(constructor): void {
-        let name = constructor["name"] as string;
-        this.Types[name.substr(0, name.length - 7).toLowerCase()] = constructor; // <ie9 will dosen't work
+    SetComponent(type: typeof Graphic, name?: string): void {
+        name = name || type.name.substr(0, name.length - 7);
+        this.Types[name.toLowerCase()] = type; // <ie9 will dosen't work
     }
     /**
      * gain conincident Component 
@@ -53,7 +53,7 @@ class GraphicFactory implements IGraphicFactory {
     GetComponent(name: string): Graphic {
         if (!name || !this.Types[name]) name = "base";
         name = name.toLowerCase();
-        return this.Pool[name] || (this.Pool[name] = new this.Types[name]())
+        return this.Pool[name] || (this.Pool[name] = new (this.Types[name] || this.Types["base"])())
     }
 }
 
@@ -78,4 +78,7 @@ export interface GraphicOutInfo {
     Visable?: boolean
     Offline?: boolean
 }
+/**
+ * this is a function to get GraphicFactory with "singleton" parton
+ */
 export let GetGraphicFactory: () => IGraphicFactory = Singleton(GraphicFactory, true);

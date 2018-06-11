@@ -24,4 +24,14 @@ export abstract class BaseMaterial {
         if (title) res.getText().setText(title);
         return res;
     }
+    public static GetCircleImage(color: string = 'gray'): ol.style.Circle {
+        return new Circle({
+            radius: 5,
+            snapToPixel: false,
+            fill: new Fill({ color: color }),
+            stroke: new Stroke({
+                color: 'white', width: 2
+            })
+        });
+    }
 }

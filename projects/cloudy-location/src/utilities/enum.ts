@@ -12,5 +12,6 @@ export enum DeviceStatus {
     Online = 1,
     Offline = 2,
     New = 10,
-    Move = 11
+    Move = 11,
+    NewOffline = 13
 }

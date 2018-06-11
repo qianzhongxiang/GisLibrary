@@ -1,3 +1,4 @@
+import { Messaging } from './../../utilities/mqttws31';
 import { BaseGraphic } from './../../graphic/BaseGraphic';
 import { Injectable } from '@angular/core';
 import { IncarGraphic } from './../../graphic/IncarGraphic';
@@ -14,14 +15,11 @@ import * as mqtt from 'mqtt'
 import { MapConifg } from './../../utilities/config';
 import * as jQuery from 'jquery'
 import { DeviceStatus } from '../../utilities/enum';
-
+import { BaseMaterial } from '../../graphic/BaseMaterial';
 // import ol_style = require('ol/style/Style')
 // import ol_stroke = require('ol/style/Stroke')
 
-GetGraphicFactory().SetComponent(BaseGraphic);
-GetGraphicFactory().SetComponent(CellPhoneGraphic);
-GetGraphicFactory().SetComponent(GPSTagGraphic);
-GetGraphicFactory().SetComponent(IncarGraphic);
+
 
 /**
  * manager dependent on TWEEN
@@ -42,6 +40,10 @@ export class DeviceService extends ObserverableWMediator {
   private Offlines: Array<{ id: string, type: string }>
   constructor() {
     super();
+    GetGraphicFactory().SetComponent(BaseGraphic, 'base');
+    GetGraphicFactory().SetComponent(CellPhoneGraphic, 'cellphone');
+    GetGraphicFactory().SetComponent(GPSTagGraphic, 'gpstag');
+    GetGraphicFactory().SetComponent(IncarGraphic, 'incar');
     this.VectorSource = new VertorSource();
     this.Layer = new VertorLayer({
       source: this.VectorSource, style: (feature) => {
@@ -58,7 +60,7 @@ export class DeviceService extends ObserverableWMediator {
           // s.getText().getStroke().setColor('red');
         }
         if (c && c.Offline) {
-          s.getFill().setColor('gray');
+          let c = s.setImage(BaseMaterial.GetCircleImage());
         }
         return s;
       }
@@ -142,16 +144,95 @@ export class DeviceService extends ObserverableWMediator {
         }, () => {
           this.SetState(this.Events.WSOpened, this.socket);
         })
+        let msgWS = new WebSocketor({ Url: "ws://223.68.186.220:3723" });
+        msgWS.Open(evt => {
+          try {
+            let datas = JSON.parse(evt.data);
+            let array = datas as Array<MsgEntity>
+            array.forEach(i => {
+              let item = this.Coms[i.Uid];
+              if (item && !item.Offline) {
+                item.Offline = true;
+                callback(item, DeviceStatus.Offline)
+                this.SetState(this.Events.DeviceUpdate, { data: item, type: DeviceStatus.Offline })
+              }
+            })
+            this.VectorSource.refresh();
+          } catch (error) {
+            LogHelper.Error(error)
+          }
+        }, () => {
+        })
         break;
       case "mqtt":
-        let topic = this.Config.mqttTopic
+        let t = this.Config.mqttTopic,
+          devMsg = 'devMsg'
           , user = this.Config.mqttUser
           , pd = this.Config.mqttPd
           , client = mqtt.connect(url, { username: user, password: pd })
 
+        // let array = url.split(":")
+        // let mqClient = new Messaging.Client(url.replace(":" + array[2], ""), Number(array[2]), "locFrontEnd");
+        // mqClient.onConnectionLost = (responseObject) => {
+        //   if (responseObject.errorCode !== 0) {
+        //     console.log("onConnectionLost:" + responseObject.errorMessage);
+        //     mqClient.connect({
+        //       password: pd,
+        //       userName: user,
+        //       onSuccess: () => {
+        //         // Once a connection has been made, make a subscription and send a message.
+        //         console.log("onConnect");
+        //         mqClient.subscribe(t)
+        //         mqClient.subscribe(devMsg)
+        //       }
+        //     });
+        //   }
+        // };
+        // mqClient.onMessageArrived = (message) => {
+        //   console.log("onMessageArrived:" + message.payloadString);
+        //   let str = message.payloadString;
+        //   let topic = message.destinationName;
+        //   try {
+        //     let datas = JSON.parse(str);
+        //     switch (topic) {
+        //       case t:
+        //         LogHelper.Log(str);
+        //         this.Resolve([datas], callback, posiConvertor)
+        //         break;
+        //       case devMsg:
+        //         let array = datas as Array<MsgEntity>
+        //         array.forEach(i => {
+        //           let item = this.Coms[i.Uid];
+        //           if (item && !item.Offline) {
+        //             item.Offline = true;
+        //             callback(item, DeviceStatus.Offline)
+        //             this.SetState(this.Events.DeviceUpdate, { data: item, type: DeviceStatus.Offline })
+        //           }
+        //         })
+        //         this.VectorSource.refresh();
+        //         // this.SetState(this.Events.MsgChange, array)
+        //         break;
+        //     }
+        //   } catch (error) {
+        //     LogHelper.Error(error)
+        //   }
+        //   // mqClient.disconnect();
+        // };
+
+        // mqClient.connect({
+        //   password: pd,
+        //   userName: user,
+        //   onSuccess: () => {
+        //     // Once a connection has been made, make a subscription and send a message.
+        //     mqClient.subscribe(t)
+        //     mqClient.subscribe(devMsg)
+        //   }
+        // });
+
+
         client.on('connect', () => {
-          client.subscribe('location')
-          client.subscribe('devMsg')
+          client.subscribe(t)
+          client.subscribe(devMsg)
           // client.publish('presence', 'Hello mqtt')
         })
 
@@ -162,10 +243,10 @@ export class DeviceService extends ObserverableWMediator {
           try {
             let datas = JSON.parse(str);
             switch (topic) {
-              case 'location':
+              case t:
                 this.Resolve([datas], callback, posiConvertor)
                 break;
-              case 'devMsg':
+              case devMsg:
                 let array = datas as Array<MsgEntity>
                 array.forEach(i => {
                   let item = this.Coms[i.Uid];
@@ -178,22 +259,29 @@ export class DeviceService extends ObserverableWMediator {
             LogHelper.Error(error)
           }
         })
-        client.subscribe(topic, { qos: 0 })
+        client.subscribe(t, { qos: 0 })
         break
     }
     return this;
   }
-  public DevPositionInit(items, callback: (gif: GraphicOutInfo, type: DeviceStatus) => void
+  /**
+   * 
+   * @param items {id}_{type},{id}_{type}
+   * @param callback 
+   * @param posiConvertor 
+   */
+  public DevPositionInit(items: string, callback: (gif: GraphicOutInfo, type: DeviceStatus) => void
     , posiConvertor?: (posi: [number, number]) => [number, number]) {
     let url = this.Config.webService + `/DeviceProfileGet?callback=?`
-    this.Jsonp(url, { items: items }, (ds: Array<{ DevState: number, LocationItem: DataItem }>) => {
-      if (!ds) return;
+    this.Jsonp(url, { items: items }, (s) => {
+      if (!s) return;
+      let ds: Array<{ DevState: number, LocationItem: DataItem }> = JSON.parse(s);
       let data: Array<DataItem> = ds.map(d => { d.LocationItem.Offline = (d.DevState == DeviceStatus.Offline); return d.LocationItem; });
       this.Resolve(data, callback, posiConvertor);
     });
   }
   //TODO to become a function of utility
-  private Jsonp(url: string, data: any, callback: (data: Array<{ DevState: number, LocationItem: DataItem }>) => void) {
+  private Jsonp(url: string, data: any, callback: (data: string) => void) {
     jQuery.ajax(url, {
       type: "GET", dataType: "jsonp", data: data, success: callback, error: (xhr, s, e) => {
         console.log("err")
@@ -211,7 +299,7 @@ export class DeviceService extends ObserverableWMediator {
       let graphic = GetGraphicFactory().GetComponent(data.Type);
       let profile: GraphicOutInfo, type: DeviceStatus
       let ps: [number, number] = [data.X, data.Y];
-      // ps = coordtransform.wgs84togcj02(ps[0], ps[1]) as [number, number]
+      // ps = ol_proj.transform(ps, GetProjByEPSG(0), 'EPSG:3857')// 'EPSG:4326'
       ps = ol_proj.transform(ps, GetProjByEPSG(data.EPSG || 0), 'EPSG:3857')// 'EPSG:4326'
       if (posiConvertor)
         ps = posiConvertor(ps);
@@ -227,11 +315,12 @@ export class DeviceService extends ObserverableWMediator {
         feature.setId(profile.Id);
         this.VectorSource.addFeature(feature);
         this.Coms[data.UniqueId] = profile;
-        type = DeviceStatus.New;
+        type = data.Offline ? DeviceStatus.NewOffline : DeviceStatus.New;
       } else {
         profile = this.Coms[data.UniqueId];
         this.ComponentMove(data.UniqueId, { x: ps[0], y: ps[1] }, data.Duration);
-        if (profile.Offline) type = DeviceStatus.Online;
+        if (profile.Offline && !data.Offline) type = DeviceStatus.Online;
+        else if (!profile.Offline && data.Offline) type = DeviceStatus.Offline;
         else type = DeviceStatus.Move
       }
       profile.Duration = data.Duration;
@@ -239,7 +328,6 @@ export class DeviceService extends ObserverableWMediator {
       profile.Time = data.CollectTime;
       profile.Location = { x: ps[0], y: ps[1] }
       profile.Offline = data.Offline;
-      if (profile.Offline) type = DeviceStatus.Offline;
       callback(profile, type);
       this.SetState(this.Events.DeviceUpdate, { data: profile, type: type })
       if (type == DeviceStatus.New) {

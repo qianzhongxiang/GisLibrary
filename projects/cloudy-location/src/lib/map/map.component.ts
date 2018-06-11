@@ -3,6 +3,7 @@ import { DeviceService } from './../device-service/device.service';
 import { Component, OnInit, ViewChild, ElementRef, Optional, AfterViewInit } from '@angular/core';
 import { AssetService } from '../asset-service/asset.service';
 import { RequestMsgObject } from './../../utilities/entities';
+import { DeviceStatus } from '../../utilities/enum';
 
 @Component({
   selector: 'cl-map',
@@ -23,14 +24,21 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.DeviceService.DataProcess(this.DataProcessCallback.bind(this))
     }
   }
-  private DataProcessCallback(gif, type) {
-    if (type == "new") {
-      let info = this.AssetService ? this.AssetService.Get(gif.Id, gif.type) : undefined;
-      if (!info) gif.Title = gif.Id;
-      else {
-        gif.Title = info.Title;
-        gif.Color = info.Color;
-      }
+  private DataProcessCallback(gif, type: DeviceStatus) {
+    switch (type) {
+      case DeviceStatus.NewOffline:
+      case DeviceStatus.New:
+        let info = this.AssetService ? this.AssetService.Get(gif.Id, gif.type) : undefined;
+        if (!info) gif.Title = gif.Id;
+        else {
+          gif.Title = info.Title;
+          gif.Color = info.Color;
+        }
+        break;
+      case DeviceStatus.Online:
+        break;
+      case DeviceStatus.Offline:
+        break;
     }
   }
   ngOnInit() {
@@ -46,6 +54,6 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
   private DevPositionInit() {
     let as = this.AssetService.GetAssets().map(a => a.Id_Type);
-    this.DeviceService.DevPositionInit(as, this.DataProcessCallback.bind(this))
+    this.DeviceService.DevPositionInit(as.join(","), this.DataProcessCallback.bind(this))
   }
 }

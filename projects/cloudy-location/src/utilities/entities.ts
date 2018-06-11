@@ -57,3 +57,5 @@ export interface MsgEntity {
     DevType: string
     Msg: string
 }
+
+export type OffLines = AssetInfo & { lastTime?: string }

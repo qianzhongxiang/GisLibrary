@@ -23,6 +23,7 @@ export class HistoryService {
   }
   public SetCurrentIndex(index: number) {
     this.currentIndex = index;
+
   }
   public Launch(index: number = this.currentIndex) {
     if (!this.Data) return;
@@ -30,7 +31,7 @@ export class HistoryService {
     let i = index;
     this.intervalFlag = window.setInterval(() => {
       if (this.Data.length < (i + 1)) return;
-      this.currentUpdates.forEach(c => c(this.Data[index], i));
+      this.currentUpdates.forEach(c => c(this.Data[i], i));
       i++;
     }, this.interval);
   }

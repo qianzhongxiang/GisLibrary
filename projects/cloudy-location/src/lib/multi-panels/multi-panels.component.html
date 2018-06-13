@@ -1,0 +1,12 @@
+<div class="float-left toolbar-mp border-right">
+  <a href="javascript:void(0);" (click)="Select(item)" [class.selected]="SelectedItem&&item.title==SelectedItem.title" *ngFor="let item of Items"
+    class="toolbar-item-mp border-bottom d-flex justify-content-center align-items-center">
+    <i class="{{item.class}}"></i>
+  </a>
+</div>
+<div class="float-left toolbar-panel-mp border-right" *ngIf="SelectedItem">
+  <!-- TODO 使用动态加载的方式 -->
+  <app-device-list *ngIf="SelectedItem.code=='deviceList'"></app-device-list>
+  <app-task-list *ngIf="SelectedItem.code=='taskList'"></app-task-list>
+
+</div>

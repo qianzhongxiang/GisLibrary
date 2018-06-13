@@ -57,5 +57,12 @@ export interface MsgEntity {
     DevType: string
     Msg: string
 }
-
+export interface WarningEntity {
+    WarningType: string
+    Title: string
+    DeviceType: string
+    DeviceId: string
+    AssetName: string
+    Msg: string
+}
 export type OffLines = AssetInfo & { lastTime?: string }

@@ -25,7 +25,7 @@ import V_Marks_Layer from "./../../layers/V_Marks_Layer";
 import ol_PostionControl from 'ol/control/mouseposition';
 import ol_box_selection from 'ol/interaction/DragBox'
 import ol_events_condition from 'ol/events/condition'
-
+import olpopup from 'ol-popup'
 @Injectable()
 export class OlMapService {
   private RouteL: ol.layer.Vector
@@ -128,6 +128,23 @@ export class OlMapService {
 
     // this.Map.on('postcompose',()=>{
     //     //TWEEN.update();
+    // });
+  }
+  public AddPopup(callback: (feature: ol.Feature) => string, layer: ol.layer.Vector) {
+    let popup = new olpopup();
+    this.Map.addOverlay(popup);
+    let s = new ol_select({
+      layers: [layer]
+    });
+    s.on("select", (e: ol.interaction.Select.Event) => {
+      let f = e.selected[0];
+      if (f)
+        popup.show((f.getGeometry() as ol.geom.Point).getCoordinates(), callback(e.selected[0]));
+    })
+    this.Map.addInteraction(s);
+
+    // this.Map.on('singleclick', (e: ol.events.Event) => {
+    //   popup.show(e["coordinate"], "popup");
     // });
   }
 

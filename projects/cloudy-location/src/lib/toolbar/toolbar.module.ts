@@ -1,3 +1,4 @@
+import { HttpClientModule } from '@angular/common/http';
 import { OfflineAssetComponent } from './../offline-asset/offline-asset.component';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,7 +12,8 @@ import { CommonModule } from '@angular/common';
     CommonModule,
     MatDialogModule,
     MatButtonModule,
-    MatTableModule
+    MatTableModule,
+    HttpClientModule
   ],
   exports: [ToolbarComponent, FilterDialogComponent, SettingDialogComponent, OfflineAssetComponent],
   declarations: [ToolbarComponent, FilterDialogComponent, SettingDialogComponent, OfflineAssetComponent],

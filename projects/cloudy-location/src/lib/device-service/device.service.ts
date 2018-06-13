@@ -59,13 +59,13 @@ export class DeviceService extends ObserverableWMediator {
           s.getText().getStroke().setWidth(5)
           // s.getText().getStroke().setColor('red');
         }
-        if (c && c.Offline) {
+        if (c && c.Offline && s) {
           let c = s.setImage(BaseMaterial.GetCircleImage());
         }
         return s;
       }
     });
-    this.Layer.setZIndex(80);
+    this.Layer.setZIndex(200);
   }
   public Init(Config: MapConifg) {
     this.Config = Config
@@ -128,8 +128,8 @@ export class DeviceService extends ObserverableWMediator {
    */
   public DataProcess(callback: (gif: GraphicOutInfo, type: DeviceStatus) => void
     , posiConvertor?: (posi: [number, number]) => [number, number]): DeviceService {
-    let type = this.Config.wsType;
-    let url = this.Config.locationSocketURI
+    let type = this.Config.locationConfig.wsType;
+    let url = this.Config.locationConfig.locationURI
     switch (type) {
       case "ws":
         if (this.socket) return this;
@@ -165,7 +165,7 @@ export class DeviceService extends ObserverableWMediator {
         })
         break;
       case "mqtt":
-        let t = this.Config.mqttTopic,
+        let t = this.Config.locationConfig.mqttTopic,
           devMsg = 'devMsg'
           , user = this.Config.mqttUser
           , pd = this.Config.mqttPd
@@ -330,7 +330,7 @@ export class DeviceService extends ObserverableWMediator {
       profile.Offline = data.Offline;
       callback(profile, type);
       this.SetState(this.Events.DeviceUpdate, { data: profile, type: type })
-      if (type == DeviceStatus.New) {
+      if (type == DeviceStatus.New || type == DeviceStatus.NewOffline) {
         feature.setProperties({ name: profile.Title })
         feature.setProperties({ mainColor: profile.Color })
       }

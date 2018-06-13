@@ -79,7 +79,6 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   }
   OpenAdvancedSearch() {
-    // this.ModalRef = this.ModalService.show(template);
     let ref = this.Dialog.open(FilterDialogComponent, {
       id: 'filterDialog', width: '50%', position: { top: "20px" }, disableClose: false
       , data: { CatesDetailed: this.CatesDetailed, Cates: this.Cates }
@@ -95,15 +94,9 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       if (dev) a.lastTime = new Date(dev.Time as string).toLocaleString();
       return (dev && dev.Offline) || (!dev);
     })
-    console.log(d)
     let ref = this.Dialog.open(SettingDialogComponent, { id: 'settingDialog', width: '50%', position: { top: '20px' }, data: { dialog: this.Dialog, dataSource: d } })
-    // this.SettingModalRef = this.ModalService.show(template);
   }
   FilterChanged() {
-    let types: Array<[string, boolean]> = [];
-    for (let b = 0; b < this.Cates.length; b++) {
-      types.push([this.Cates[b].code, this.Cates[b].visable]);
-    }
     this.DeviceService.SetShowItem((gif) => {
       if (gif.Offline) {
         return this.offline.visable;
@@ -120,34 +113,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       let visable = (cate ? cate.visable : true) && catedVisable
       return visable;
     })
-    // this.DeviceService.SetShowItem(types);
   }
-  @ViewChild("unconnected", { read: ElementRef })
-  Container: ElementRef
-  // ShowUnconnected() {
-  //   let c = this.Container.nativeElement as HTMLDivElement;
-  //   // let input = document.createElement("input");
-  //   let list = document.createElement("div");
-  //   list.style.overflow = "auto";
-  //   list.style.height = "400px";
-  //   // input.classList.add("form-control-sm")
-  //   // container.classList.add("");
-  //   // c.appendChild(input);
-  //   c.appendChild(list);
-
-  //   this.Unconnected = new VinciTable(list, {
-  //     DataSource: new DataSource({
-  //       Read: p => {
-  //         let d = [];
-  //         d = this.AssetService.GetAssets().filter(a => !this.DeviceService.Obtain(a.Uid))
-  //         p.Success(d);
-  //       }
-  //     }), Columns: [{ field: "Title", title: "名称" }, { title: "类型", field: "Type" }, { title: "Id", field: "Uid" }]
-  //   })
-  //   let windo = new VinciWindow(list, { AutoDestory: true, Title: "未上线设备" });
-  //   // this.SettingModalRef.hide();
-  //   windo.Open();
-  // }
 }
 
 @Component({
@@ -164,8 +130,8 @@ export class FilterDialogComponent {
     this.TempCates = this.data.Cates.map(c => Extend({}, c))
   }
   AdvancedSearchSave() {
-    this.data.CatesDetailed.forEach((c, i) => Object.assign(c, this.TempCatesDetailed[i]));
-    this.data.Cates.forEach((c, i) => Object.assign(c, this.TempCates[i]));
+    (this.data.CatesDetailed as Array<ICate>).forEach((c, i) => c.visable = this.TempCatesDetailed[i].visable);
+    this.data.Cates.forEach((c, i) => c.visable = this.TempCates[i].visable);
     this.ModalRef.close("changed");
   }
 }
@@ -181,7 +147,7 @@ export class SettingDialogComponent {
     this.Data = data;
   }
   public Offlines() {
-    this.Data.dialog.open(OfflineAssetComponent, { id: 'offlines', width: '50%', height: '80%', data: { dataSource: this.Data.dataSource } })
+    this.Data.dialog.open(OfflineAssetComponent, { id: 'offlines', width: '60%', height: '80%', data: { dataSource: this.Data.dataSource } })
   }
 }
 

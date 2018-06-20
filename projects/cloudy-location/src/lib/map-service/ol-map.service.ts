@@ -15,6 +15,8 @@ import ol_proj from 'ol/proj';
 import ol_feature from 'ol/feature';
 import ol_polygon from 'ol/geom/Polygon';
 import ol_lineString from 'ol/geom/LineString';
+import ol_circle from 'ol/geom/Circle';
+import ol_point from 'ol/geom/Point';
 import ol_geometry from 'ol/geom/Geometry';
 import ol_draw from 'ol/interaction/Draw'
 import ol_select from 'ol/interaction/Select';
@@ -361,4 +363,24 @@ export class OlMapService {
     }
     return draw;
   }
+
+  public CreateFeature(type: "LineString" | "Circle" | "Polygon", points: [number, number][]): ol.Feature {
+    let geom: ol.geom.Geometry
+    //epsg transform
+    points = points.map(p => ol_proj.transform(p, this.Config.srs, this.Config.frontEndEpsg || "EPSG:3857"))
+    switch (type.toLowerCase()) {
+      case "linestring":
+        geom = new ol_lineString(points)
+        break;
+      case "circle":
+        geom = new ol_circle(points[0], new ol_lineString(points).getLength());
+        break
+      case "polygon":
+        geom = new ol_polygon([points])
+        break
+    }
+    return new ol_feature(geom);
+  }
+
+
 }

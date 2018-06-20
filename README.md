@@ -3,6 +3,20 @@
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 6.0.3.
 ## Migration
 ### 0.0.2=>0.0.3:
+
+## multi-panels
+<a name="multi-panels-example"></a>
+EXAMPLE：
+```html
+<cl-multi-panels>
+  <cl-multi-panels-item [iconClass]="'class1'" [code]="'code1'" [title]="'title1'" [class]="'code1'">
+    <div>item1</div>
+  </cl-multi-panels-item>
+  <cl-multi-panels-item [iconClass]="'class2'" [code]="'code2'" [title]="'title2'" [class]="'code2'">
+    <div>item2</div>
+  </cl-multi-panels-item>
+</cl-multi-panels>
+```
 ## Development server
 
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.

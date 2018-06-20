@@ -1,3 +1,4 @@
+import { DeviceService } from './../device-service/device.service';
 import { MapConifg } from './../../utilities/config';
 import { DataItem } from './../../utilities/entities';
 import { Injectable } from '@angular/core';
@@ -11,6 +12,7 @@ export class HistoryService {
   public Data: Array<DataItem>
   private currentIndex: number = 0
   private Config: MapConifg
+  constructor() { }
   public Init(config: MapConifg) {
     this.Config = config;
   }
@@ -38,6 +40,11 @@ export class HistoryService {
   public Stop() {
     if (this.intervalFlag) window.clearInterval(this.intervalFlag);
   }
+  public Clean() {
+    this.Stop();
+    this.Data = [];
+    this.currentIndex = 0;
+  }
   /**
    * 获取历史数据 通过jsonp
    * @param uid 
@@ -47,9 +54,9 @@ export class HistoryService {
    * @param callback 
    */
   public GetData(datas: Array<{ uid: string, type: string, sTime: string, eTime: string }>, callback?: (data: Array<DataItem>) => void) {
+    this.Clean()
     let res: Location, url = this.Config.webService + `/HistoryGet?callback=?`
       , dataIndex = 0, index = 1, count = 200;
-    this.Data = [];
 
     // let postdata = { uid: uid, type: type, stime: sTime.toISOString(), etime: eTime.toISOString(), index: 1, count: 200 };
     let postdata = Object.assign(datas[dataIndex], { index: index, count: count });// { uid: "352544071943238", type: "SF", stime: sTime.toISOString(), etime: eTime.toISOString(), index: 1, count: 200 };

@@ -34,6 +34,7 @@
     "ol-popup": "^3.0.0",
     "process-nextick-args": "^2.0.0",
     "rxjs": "^6.0.0",
+    "vincijs": "^1.0.37",
     "zone.js": "^0.8.26"
   },
   "devDependencies": {

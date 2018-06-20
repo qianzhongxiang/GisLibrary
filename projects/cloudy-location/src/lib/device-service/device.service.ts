@@ -1,10 +1,10 @@
 import { Messaging } from './../../utilities/mqttws31';
 import { BaseGraphic } from './../../graphic/BaseGraphic';
 import { Injectable } from '@angular/core';
-import { IncarGraphic } from './../../graphic/IncarGraphic';
-import { GPSTagGraphic } from './../../graphic/GPSTagGraphic';
-import { CellPhoneGraphic } from './../../graphic/CellPhoneGraphic';
-import { GraphicOutInfo, GetGraphicFactory, Graphic } from "./../../graphic/Graphic";
+// import { IncarGraphic } from './../../graphic/IncarGraphic';
+// import { GPSTagGraphic } from './../../graphic/GPSTagGraphic';
+// import { CellPhoneGraphic } from './../../graphic/CellPhoneGraphic';
+import { GraphicOutInfo, GetGraphicFactory, Graphic, IStyleOptions } from "./../../graphic/Graphic";
 import { GetConfigManager, IObseverable, ObserverableWMediator, LogHelper, WebSocketor } from 'vincijs';
 import VertorSource from 'ol/source/Vector'
 import VertorLayer from 'ol/layer/Vector'
@@ -19,7 +19,7 @@ import { BaseMaterial } from '../../graphic/BaseMaterial';
 // import ol_style = require('ol/style/Style')
 // import ol_stroke = require('ol/style/Stroke')
 
-
+const DIRECTION = "direction"
 
 /**
  * manager dependent on TWEEN
@@ -41,27 +41,25 @@ export class DeviceService extends ObserverableWMediator {
   constructor() {
     super();
     GetGraphicFactory().SetComponent(BaseGraphic, 'base');
-    GetGraphicFactory().SetComponent(CellPhoneGraphic, 'cellphone');
-    GetGraphicFactory().SetComponent(GPSTagGraphic, 'gpstag');
-    GetGraphicFactory().SetComponent(IncarGraphic, 'incar');
+    // GetGraphicFactory().SetComponent(CellPhoneGraphic, 'cellphone');
+    // GetGraphicFactory().SetComponent(GPSTagGraphic, 'gpstag');
+    // GetGraphicFactory().SetComponent(IncarGraphic, 'incar');
     this.VectorSource = new VertorSource();
     this.Layer = new VertorLayer({
       source: this.VectorSource, style: (feature) => {
         let f = (feature as ol.Feature), id = f.getId(), type = f.get("type"), c = this.Coms[id]
+          , direction = f.get(DIRECTION)
         if (this.Filter && !c.Visable) { c.Visable = this.Filter(c) }
         let v = c ? c.Visable : false;
-        let s = GetGraphicFactory().GetComponent(type).GetStyle(f.get('mainColor'), f.get('name') || id, v);
+        let ops: IStyleOptions = {
+          visable: v, color: f.get('mainColor'), title: f.get('name') || id
+          , rotation: direction
+        }
+        if (c && c.Offline) ops.color = "gray";
         if (this.HighlightedId && this.HighlightedId == id) {
-          let c = s.getImage() as ol.style.Circle
-          c.getStroke().setColor('yellow');
-          s.setZIndex(99);
-          s.getText().setFont("Normal bold 18px Arial");
-          s.getText().getStroke().setWidth(5)
-          // s.getText().getStroke().setColor('red');
+          Object.assign(ops, { strokeWidth: 5, strokeColor: 'yellow', zIndex: 99, font: "Normal bold 18px Arial" })
         }
-        if (c && c.Offline && s) {
-          let c = s.setImage(BaseMaterial.GetCircleImage());
-        }
+        let s = GetGraphicFactory().GetComponent(type).GetStyle(ops);
         return s;
       }
     });
@@ -144,6 +142,7 @@ export class DeviceService extends ObserverableWMediator {
         }, () => {
           this.SetState(this.Events.WSOpened, this.socket);
         })
+        //离线socket
         let msgWS = new WebSocketor({ Url: "ws://223.68.186.220:3723" });
         msgWS.Open(evt => {
           try {
@@ -328,6 +327,8 @@ export class DeviceService extends ObserverableWMediator {
       profile.Time = data.CollectTime;
       profile.Location = { x: ps[0], y: ps[1] }
       profile.Offline = data.Offline;
+      profile.Direction = data.Direction;
+      feature.set(DIRECTION, data.Direction)
       callback(profile, type);
       this.SetState(this.Events.DeviceUpdate, { data: profile, type: type })
       if (type == DeviceStatus.New || type == DeviceStatus.NewOffline) {

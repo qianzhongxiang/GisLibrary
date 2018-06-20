@@ -1,9 +1,27 @@
-import { Composit, Singleton, LogHelper } from "vincijs";
+import { Composit, Singleton, LogHelper, IComposit } from "vincijs";
 import { BaseGeometry } from "./BaseGeometry";
 import { BaseMaterial } from "./BaseMaterial";
-// import { Tracker } from "../scene/Tracker";
+
+export interface IStyleOptions {
+    color?: string
+    title?: string
+    /**
+     * by default, true
+     */
+    visable?: boolean
+    rotation?: number
+    zIndex?: number
+    font?: string
+    strokeWidth?: number
+    strokeColor?: string
+}
+export interface IGraphic extends IComposit {
+    GetStyle(options: IStyleOptions): ol.style.Style[]
+    Buid(position: [number, number], type?: string): ol.Feature
+}
 
 export abstract class Graphic extends Composit {
+    protected Color: string = "gray"
     public Visable: boolean = true;
     public TypeCode: number = 0
     public Events = { OnLoaded: "onloaded" }
@@ -24,10 +42,22 @@ export abstract class Graphic extends Composit {
     public Buid(position: [number, number], type?: string): ol.Feature {  //TODO 当前还未使用绝对坐标体系
         return BaseGeometry.GetPoint(position, type);
     }
-    public GetStyle(color?: string, title?: string, visable: boolean = true): ol.style.Style {
-        if (!visable || !this.Visable) return null;
-        return BaseMaterial.GetPointMaterial(color, title);
+    protected Style(type: "arrow" | "circle" = 'circle', options?: IStyleOptions): ol.style.Style[] {
+        options = Object.assign({
+            visable: true, color: this.Color,
+            rotation: 0, front: "Normal 14px Arial",
+            strokeWidth: 3, strokeColor: "white"
+        }, options)
+        if (!options.visable || !this.Visable) return null;
+        switch (type) {
+            case "arrow":
+                return BaseMaterial.GetArrowMaterial(options);
+            case "circle":
+            default:
+                return BaseMaterial.GetPointMaterial(options);
+        }
     }
+
     public OnMoved(o3d: any, target: [number, number]) {
 
     }
@@ -36,7 +66,7 @@ export abstract class Graphic extends Composit {
     }
 }
 export interface IGraphicFactory {
-    GetComponent(name: string): Graphic
+    GetComponent(name: string): IGraphic
     SetComponent(type: typeof Graphic, name?: string): void
 }
 class GraphicFactory implements IGraphicFactory {
@@ -50,7 +80,7 @@ class GraphicFactory implements IGraphicFactory {
      * gain conincident Component 
      * @param name  such as "Map" not "MapGraphic"
      */
-    GetComponent(name: string): Graphic {
+    GetComponent(name: string): IGraphic {
         if (!name || !this.Types[name]) name = "base";
         name = name.toLowerCase();
         return this.Pool[name] || (this.Pool[name] = new (this.Types[name] || this.Types["base"])())
@@ -65,9 +95,9 @@ export interface GraphicOutInfo {
     Location: { x: number, y: number }
     Time?: Date | string
     ReveiveTime: Date
-    Graphic: Graphic
+    Graphic: IGraphic
     Id: string
-    Parent: Graphic
+    Parent: IGraphic
     Title?: string
     type: string
     // Path?: Tracker
@@ -77,6 +107,7 @@ export interface GraphicOutInfo {
     Color?: string
     Visable?: boolean
     Offline?: boolean
+    Direction?: number
 }
 /**
  * this is a function to get GraphicFactory with "singleton" parton

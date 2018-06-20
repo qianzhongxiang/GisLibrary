@@ -1,4 +1,5 @@
-import { WarningEntity } from './../../utilities/entities';
+import { WsService } from './../ws-service/ws.service';
+import { MsgEntity } from './../../utilities/entities';
 import { Injectable } from '@angular/core';
 import { WebSocketor, LogHelper } from 'vincijs';
 
@@ -7,42 +8,45 @@ import { WebSocketor, LogHelper } from 'vincijs';
 })
 export class MessageService {
 
-  constructor() { }
+  constructor(private WsService: WsService) { }
   private WarningService: string
   private WarningWsType: string
-  Msgs: Array<{ msg: string, data: WarningEntity }> = []
-  public Init(warningService: string, warningWsType: string = 'mqtt') {
+  private User: string
+  private Pd: string
+  Msgs: Array<{ msg: string, data: MsgEntity }> = []
+  public Init(warningService: string, warningWsType: string = 'mqtt', user?: string, pd?: string) {
     this.WarningService = warningService;
     this.WarningWsType = warningWsType;
+    this.User = user;
+    this.Pd = pd;
   }
   public MsgFormat(warnningName: string, assetName: string) {
     return `${warnningName}:${assetName} --${new Date().toLocaleTimeString()}`
   }
 
-  public PushMsg(msg: { msg: string, data: WarningEntity }) {
+  public PushMsg(msg: { msg: string, data: MsgEntity }) {
     this.Msgs.unshift(msg)
     if (this.Msgs.length > 20)
       this.Msgs.pop()
   }
-  public Run(callback: (item: WarningEntity) => true) {
+  public Run(callback: (item: MsgEntity) => string) {
     if (this.WarningService) {
       switch ((this.WarningWsType || 'mqtt').toLowerCase()) {
         case 'ws':
-          new WebSocketor({ Url: this.WarningService }).Open(evt => {
-            let datas: Array<WarningEntity> = JSON.parse(evt.data);
-            datas.forEach(d => {
-              // callback()
-              if (callback) {
-
-
-              }
-              // d.WarningType.Name, i.Title
-              //   this.PushMsg({});
+          this.WsService.BasicWs(this.WarningService).Subscribe("",
+            str => {
+              let datas: Array<MsgEntity> = JSON.parse(str);
+              datas.forEach(d => {
+                this.PushMsg({ msg: callback(d), data: d });
+              })
             })
-          })
+
           break;
         case 'mqtt':
-
+          this.WsService.Mqtt(this.WarningService, this.User, this.Pd).Subscribe('msg', (payload) => {
+            let d = JSON.parse(payload);
+            this.PushMsg({ msg: callback(d), data: d });
+          })
           break;
       }
 

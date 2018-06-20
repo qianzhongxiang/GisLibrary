@@ -11,16 +11,8 @@ import { Component, OnInit, Input, AfterViewInit } from '@angular/core';
 })
 export class MessageComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
-    this.MessageService.Run(item => {
-      try {
-        // let i = this.AssetService.Get(item.Task_Assets.UniqueidGPSTerminal, d.Task_Assets.TerminalType.Description)
-        // this.Msgs.push({ msg: `${d.WarningType.Name}:${i.Title}--${new Date().toLocaleTimeString()}`, data: d })
-      }
-      catch (e) {
-        LogHelper.Log(e);
-      }
-      return true;
-    })
+    this.MessageService.Run(item => this.MessageService.MsgFormat(item.Title, item.AssetName)
+    )
   }
   constructor(private AssetService: AssetService, public MessageService: MessageService) { }
 

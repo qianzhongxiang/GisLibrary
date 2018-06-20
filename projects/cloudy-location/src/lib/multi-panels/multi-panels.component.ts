@@ -1,25 +1,37 @@
-// import { Component, OnInit } from '@angular/core';
-// import { AppConfigService } from '../app-config.service';
-// export interface CateItem { class: string, title: string, code: string, disable?: boolean }
+import { MultiPanelsItemComponent } from './multi-panels-item/multi-panels-item.component';
+import { ICate } from './../../utilities/entities';
+import { Component, OnInit, Input, ContentChildren, QueryList, AfterContentInit } from '@angular/core';
 
-// @Component({
-//   selector: 'app-multi-panels',
-//   templateUrl: './multi-panels.component.html',
-//   styleUrls: ['../../assets/font-custom.css', './multi-panels.component.css']
-// })
+@Component({
+    selector: 'cl-multi-panels',
+    templateUrl: './multi-panels.component.html',
+    styleUrls: ['./multi-panels.component.css']
+})
 
-// export class MultiPanelsComponent implements OnInit {
-//   Items: Array<CateItem>
-//   SelectedItem: CateItem
-//   constructor(private appConfigService: AppConfigService) { }
+export class MultiPanelsComponent implements OnInit, AfterContentInit {
+    ngAfterContentInit(): void {
+        // this.Items = this.panels.map(p => { return { iconClass: p.iconClass, title: p.title, code: p.code } })
+    }
+    // Items: Array<ICate>
+    @ContentChildren(MultiPanelsItemComponent)
+    public panels: QueryList<MultiPanelsItemComponent>
+    public SelectedItem: MultiPanelsItemComponent
+    constructor() {
 
-//   ngOnInit() {
-//     this.Items = this.appConfigService.Data.multiPanelConfiguration.items;
-//   }
-//   Select(item: CateItem) {
-//     if (this.SelectedItem == item) {
-//       this.SelectedItem = undefined;
-//     } else
-//       this.SelectedItem = item;
-//   }
-// }
+    }
+
+    ngOnInit() {
+    }
+
+    Select(item: MultiPanelsItemComponent) {
+        if (this.SelectedItem == item) {
+            this.SelectedItem = undefined;
+        } else
+            this.SelectedItem = item;
+        this.SetShow();
+    }
+    private SetShow() {
+        this.panels.forEach(p => p.show = false);
+        if (this.SelectedItem) this.SelectedItem.show = true;
+    }
+}

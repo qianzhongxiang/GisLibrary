@@ -31,9 +31,17 @@ export interface MapConifg {
     "frontEndEpsg"?: string,
     "infoUrl"?: string
 }
-export interface TableConfig { }
+export interface TableConfig {
+    columns: Array<TableItem>
+    checkable?: boolean
+}
 export interface TableItem {
-    field: string
+    field: string,
+    title: string
+}
+
+export interface FormItem {
+    type: 'select' | 'input' | 'checkbox' | 'radiobutton' | 'datepicker' | 'datetimepicker'
 }
 export interface MultiPanelConfiguration {
     "items": Array<
@@ -42,7 +50,9 @@ export interface MultiPanelConfiguration {
         "title"?: string,
         "code": string,
         "disable"?: boolean,
-        ""
+        "contentType": "table" | "form" | "html-str"
+        // "tableConfig"?: TableConfig
+        // "formConfig"?: FormConfig
     }
     >,
     "taskListSource": {

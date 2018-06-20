@@ -228,7 +228,7 @@ export class OlMapService {
     layer.getSource().removeFeature(feature);
   }
 
-  public SelectDraw(callback: (features: Array<ol.Feature>) => void, id: string = "1"): ol.interaction.Interaction {
+  public SelectDraw(callback: (features: Array<ol.Feature>) => void, id: string = "1"): ol.interaction.Select {
     // if (!this.DrawL) return;
     let interactions = this.Map.getInteractions()
       , items = interactions.getArray().filter(i => i.get("levelId") == id);
@@ -268,8 +268,7 @@ export class OlMapService {
     if (boxSelection) {
       let fs = s.getFeatures();
       let bs = new ol_box_selection({
-        condition: ol_events_condition.platformModifierKeyOnly
-        ,
+        condition: ol_events_condition.platformModifierKeyOnly,
       });
       bs.on('boxend', e => {
         let extent = bs.getGeometry().getExtent()

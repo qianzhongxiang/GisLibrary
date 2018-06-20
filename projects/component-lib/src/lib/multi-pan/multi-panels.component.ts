@@ -16,7 +16,7 @@ export interface MultiPanelsConfig {
 @Component({
   selector: 'app-multi-panels',
   templateUrl: './multi-panels.component.html',
-  styleUrls: ['../../assets/font-custom.css', './multi-panels.component.css']
+  styleUrls: ['./multi-panels.component.css']
 })
 
 export class MultiPanelsComponent implements OnInit {

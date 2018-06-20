@@ -21,4 +21,7 @@ export class Tracker {
         points.forEach(p => (this.Feature.getGeometry() as ol.geom.LineString).appendCoordinate(p))
         return this;
     }
+    public Clean() {
+        (this.Feature.getGeometry() as ol.geom.LineString).setCoordinates([])
+    }
 }

@@ -19,7 +19,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   @Input()
   public DeviceReceive: boolean
   @Input()
-  public InfoUrl: string
+  /** be defined as url if Popup is set a string */
+  public Popup: ((id: string, type: string) => string) | string | Array<string>
+  @Input()
+  public AssetClick: (id: string, type: string) => void
+
   ngAfterViewInit(): void {
     this.OlMapService.Show({ target: this.container.nativeElement })
     if (this.DeviceService) {
@@ -29,35 +33,46 @@ export class MapComponent implements OnInit, AfterViewInit {
         this.DeviceService.Bind(this.DeviceService.Events.WSOpened, this.InitWSType.bind(this))
         this.DevPositionInit();
         this.DeviceService.DataProcess(this.DataProcessCallback.bind(this))
-        this.OlMapService.AddPopup(f => {
-          let id = f.getId(), type = f.get("type")
-          // return `${id}_${type}`;
-          let str = "";
-          if (!this.InfoUrl) {
-            return "err: InfoUrl is not decleared";
-          }
-          try {
-            new Ajax({ url: this.InfoUrl, data: { uid: id, type: type }, contentType: "json", async: false })
-              .done(d => {
-                if (d.IsSuccess && d.Data) {
-                  let array = d.Data as Array<string>;
-                  str = `<div><p>${array.join("</br>")}</p></div>`
-                }
-              })
-          }
-          catch (e) {
-            LogHelper.Error(e)
-          }
-          return str;
-        }, layer);
+        if (this.Popup)
+          this.ShowPopup(layer);
+        if (this.AssetClick) {
+          this.OlMapService.SelectInLayer([layer], (fs) => {
+            let f = fs[0]
+            if (!f) return;
+            let id = f.getId() as string, type = f.get("type")
+            this.AssetClick(id, type);
+          })
+        }
       } else if (this.DeviceLay) {
         this.OlMapService.AddLayer(this.DeviceService.GetLayer());
       }
     }
-
   }
-  private ShowPopup() {
-
+  private ShowPopup(layer) {
+    this.OlMapService.AddPopup(f => {
+      let id = f.getId() as string, type = f.get("type")
+      // return `${id}_${type}`;
+      let str = "";
+      if (typeof this.Popup === 'string') {
+        try {
+          new Ajax({ url: this.Popup, data: { uid: id, type: type }, contentType: "json", async: false })
+            .done(d => {
+              if (d.IsSuccess && d.Data) {
+                let array = d.Data as Array<string>;
+                str = `<div><p>${array.join("</br>")}</p></div>`
+              }
+            })
+        }
+        catch (e) {
+          LogHelper.Error(e)
+        }
+      } else if (typeof this.Popup === 'function') {
+        str = this.Popup(id, type);
+      } else if (this.Popup instanceof Array) {
+        str = `<div><p>${this.Popup.join("</br>")}</p></div>`
+      }
+      return str;
+    }, layer);
   }
   constructor(private OlMapService: OlMapService, @Optional() private DeviceService: DeviceService, @Optional() private AssetService: AssetService) { }
   // public DeviceInit() {

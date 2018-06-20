@@ -5,11 +5,18 @@
     position: absolute;
     background-color: #ffffff;
 }
+/* :host ::ng-deep cl-multi-panels-item{
+    display: none;
+} */
+/* :host ::ng-deep cl-multi-panels-item.selected{
+    display: block;
+} */
 .toolbar-mp{
     width:46px;
     font-size: 23px;
     /* background-color: red; */
 }
+
 .toolbar-panel-mp{
     width:260px;
     height: 100%;

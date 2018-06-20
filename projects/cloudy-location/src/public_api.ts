@@ -5,12 +5,13 @@ export * from './lib/map/index'
 export * from './lib/toolbar/index'
 export * from './lib/offline-asset/index'
 export * from './lib/message/index'
+export * from './lib/multi-panels/index'
 export * from './utilities/entities'
 export * from './utilities/Tracker'
 export * from './utilities/enum'
 export * from './utilities/olProjConvert'
 export * from './utilities/config'
-export * from './graphic/Graphic'
+export * from './graphic'
 
 
 export * from './lib/map-service/ol-map.service';

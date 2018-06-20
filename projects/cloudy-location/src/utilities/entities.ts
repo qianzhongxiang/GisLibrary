@@ -10,6 +10,7 @@ export interface DataItem {
     UniqueId: string
     Duration: number
     Offline: boolean
+    Direction: number
 }
 export interface AssetInfo {
     Id: string
@@ -37,13 +38,14 @@ export interface RequestMsgObject {
     UIds?: Array<string>
 }
 export interface ICate {
-    "class": string,
-    "title": string,
-    "code": string,
-    "color": string,
-    "visable": boolean,
-    "mp": boolean,
-    "count": number
+    "iconClass"?: string
+    "class"?: string,
+    "title"?: string,
+    "code"?: string,
+    "color"?: string,
+    "visable"?: boolean,
+    "mp"?: boolean,
+    "count"?: number
 }
 export interface ToolbarConfig {
     "items": Array<ICate>,
@@ -52,14 +54,16 @@ export interface ToolbarConfig {
 
 export interface MsgEntity {
     MsgType: MsgType
-    SubType: string
+    SubType?: string
+    Title?: string
     Uid: string
     DevType: string
-    Msg: string
+    Msg?: string
+    AssetName?: string
 }
 export interface WarningEntity {
     WarningType: string
-    Title: string
+    WarningTitle: string
     DeviceType: string
     DeviceId: string
     AssetName: string

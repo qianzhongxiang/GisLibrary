@@ -98,16 +98,17 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
   FilterChanged() {
     this.DeviceService.SetShowItem((gif) => {
-      if (gif.Offline) {
-        return this.offline.visable;
-      }
+
       let i = this.AssetService.Get(gif.Id, gif.type)
-      let catedVisable: boolean = true;
+      let catedVisable: boolean = gif.Offline ? this.offline.visable : true;
       if (i) {
         let c = i.Category.toLowerCase();
         let cated = this.CatesDetailed.find(cate => cate.code == c);
-        catedVisable = (cated ? cated.visable : true);
+        catedVisable = (cated ? cated.visable : true) && catedVisable;
       }
+      //the offlines never verify the major types
+      if (gif.Offline)
+        return catedVisable;
       let t = gif.type.toLowerCase();
       let cate = this.Cates.find(cate => cate.code == t);
       let visable = (cate ? cate.visable : true) && catedVisable

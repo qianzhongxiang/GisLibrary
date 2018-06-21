@@ -1,9 +1,6 @@
 import { Messaging } from './../../utilities/mqttws31';
 import { BaseGraphic } from './../../graphic/BaseGraphic';
 import { Injectable } from '@angular/core';
-// import { IncarGraphic } from './../../graphic/IncarGraphic';
-// import { GPSTagGraphic } from './../../graphic/GPSTagGraphic';
-// import { CellPhoneGraphic } from './../../graphic/CellPhoneGraphic';
 import { GraphicOutInfo, GetGraphicFactory, Graphic, IStyleOptions } from "./../../graphic/Graphic";
 import { GetConfigManager, IObseverable, ObserverableWMediator, LogHelper, WebSocketor } from 'vincijs';
 import VertorSource from 'ol/source/Vector'
@@ -48,7 +45,7 @@ export class DeviceService extends ObserverableWMediator {
     this.Layer = new VertorLayer({
       source: this.VectorSource, style: (feature) => {
         let f = (feature as ol.Feature), id = f.getId(), type = f.get("type"), c = this.Coms[id]
-          , direction = f.get(DIRECTION)
+          , direction = c.Direction
         if (this.Filter && !c.Visable) { c.Visable = this.Filter(c) }
         let v = c ? c.Visable : false;
         let ops: IStyleOptions = {
@@ -328,7 +325,6 @@ export class DeviceService extends ObserverableWMediator {
       profile.Location = { x: ps[0], y: ps[1] }
       profile.Offline = data.Offline;
       profile.Direction = data.Direction;
-      feature.set(DIRECTION, data.Direction)
       callback(profile, type);
       this.SetState(this.Events.DeviceUpdate, { data: profile, type: type })
       if (type == DeviceStatus.New || type == DeviceStatus.NewOffline) {

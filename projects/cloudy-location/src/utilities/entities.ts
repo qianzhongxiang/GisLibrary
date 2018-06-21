@@ -18,8 +18,10 @@ export interface AssetInfo {
     Title: string
     Color: string
     Type: string
+    CategoryName?: string
     Id_Type?: string
     Category: string
+    AssetStatus: string
 }
 export enum WSType {
     //None = 0,

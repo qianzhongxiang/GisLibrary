@@ -34,6 +34,7 @@ export class OlMapService {
   private RangeL: ol.layer.Vector
   private DrawL: ol.layer.Vector
   private Config: MapConifg
+  private DefaultStyle = new ol_style({ stroke: new ol_stroke({ width: 2, color: '#8ccf1c' }) })
   /**
    * 获取矢量图层
    * @param type "route|range|draw"
@@ -312,58 +313,61 @@ export class OlMapService {
     })
   }
   /**
-   * 
+   * can add some features if have no type gaven
    * @param type {"Box","LineString","Circle","Polygon"}
    * @param callback 
    * @param style 
    * @param id 
    */
-  public Draw(type: string, callback: (feature) => void, style?: ol.style.Style, features?: Array<ol.Feature>, id: string = "1", multi: boolean = false): ol.interaction.Interaction {
-    let source: ol.source.Vector;
+  public Draw(type?: "Box" | "LineString" | "Circle" | "Polygon", callback?: (feature) => void, styles: ol.style.Style[] = [this.DefaultStyle]
+    , features?: Array<ol.Feature>, id: string = "1", multi: boolean = false): ol.interaction.Interaction {
     if (!this.DrawL) {
       this.DrawL = new ol_layer_vector({
-        source: (source = new ol_source_vector()),
+        source: new ol_source_vector(),
         zIndex: 105,
-        style: style
+        style: styles
       });
       this.Map.addLayer(this.DrawL);
     }
-    else {
-      source = this.DrawL.getSource();
-    }
-
-    let interactions = this.Map.getInteractions()
-      , items = interactions.getArray().filter(i => i.get("levelId") == id);
-    if (items)
-      items.forEach(i => this.Map.removeInteraction(i));
-    let geometryFunction = undefined;
-    switch (type) {
-      case "Box":
-        geometryFunction = ol_draw.createBox();
-        type = "Circle";
-        break;
-    }
-    let draw = new ol_draw({
-      source: source,
-      type: type as ol.geom.GeometryType,
-      geometryFunction: geometryFunction
-    })
-    draw.set("levelId", id)
-    draw.on("drawend", (e: ol.interaction.Draw.Event) => {
-      let f = e.feature;
-      if (!multi)
-        this.Map.removeInteraction(draw)
-      callback(f);
-    })
-    this.Map.addInteraction(draw)
-    if (features) {
-      source.addFeatures(features);
-      if (!multi)
-        this.Map.removeInteraction(draw)
+    let source = this.DrawL.getSource();
+    if (features) source.addFeatures(features);
+    //drawing logic
+    let draw: ol.interaction.Draw
+    if (type) {
+      let interactions = this.Map.getInteractions()
+        , items = interactions.getArray().filter(i => i.get("levelId") == id);
+      if (items)
+        items.forEach(i => this.Map.removeInteraction(i));
+      let geometryFunction = undefined;
+      switch (type) {
+        case "Box":
+          geometryFunction = ol_draw.createBox();
+          type = "Circle";
+          break;
+      }
+      draw = new ol_draw({
+        source: source,
+        type: type as ol.geom.GeometryType,
+        geometryFunction: geometryFunction
+      })
+      draw.set("levelId", id)
+      draw.on("drawend", (e: ol.interaction.Draw.Event) => {
+        let f = e.feature;
+        if (!multi)
+          this.Map.removeInteraction(draw)
+        if (callback)
+          callback(f);
+      })
+      this.Map.addInteraction(draw)
     }
     return draw;
   }
 
+  /**
+   * 
+   * @param type "LineString" | "Circle" | "Polygon"
+   * @param points 
+   */
   public CreateFeature(type: "LineString" | "Circle" | "Polygon", points: [number, number][]): ol.Feature {
     let geom: ol.geom.Geometry
     //epsg transform

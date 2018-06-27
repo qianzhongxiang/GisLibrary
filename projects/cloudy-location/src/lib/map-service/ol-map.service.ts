@@ -230,7 +230,11 @@ export class OlMapService {
     if (!layer) return;
     layer.getSource().removeFeature(feature);
   }
-
+  /**
+   * use return select to get all feature
+   * @param callback just get last selected feature
+   * @param id 
+   */
   public SelectDraw(callback: (features: Array<ol.Feature>) => void, id: string = "1"): ol.interaction.Select {
     // if (!this.DrawL) return;
     let interactions = this.Map.getInteractions()
@@ -256,14 +260,18 @@ export class OlMapService {
    * @param callback the function to handle given features 
    * @param boxSelection the option with boolen type to launch box-selection. it is set true by default.
    */
-  public SelectInLayer(layers: Array<ol.layer.Vector>, callback: (features: Array<ol.Feature>) => void, boxSelection: boolean = true): ol.interaction.Select {
-    let s = new ol_select({
+  public SelectInLayer(layers: Array<ol.layer.Vector>, callback: (features: Array<ol.Feature>) => void, boxSelection: boolean = true, multi: boolean = true): ol.interaction.Select {
+    let options: any = {
       layers: layers,
-      addCondition: ol_events_condition.click,
-      removeCondition: ol_events_condition.click,
-      condition: ol_events_condition.click,
-      multi: true
-    });
+      multi: multi
+    }
+    if (multi) {
+      options.addCondition = ol_events_condition.click
+      options.removeCondition = ol_events_condition.click
+      options.condition = ol_events_condition.click
+    }
+
+    let s = new ol_select(options);
     s.on("select", (e: ol.interaction.Select.Event) => {
       callback(e.selected);
     })
@@ -316,19 +324,24 @@ export class OlMapService {
    * can add some features if have no type gaven
    * @param type {"Box","LineString","Circle","Polygon"}
    * @param callback 
-   * @param style 
+   * @param style if style is function, then it can style feature customly, but if style is an array ,then all feature will apply same styles
    * @param id 
    */
-  public Draw(type?: "Box" | "LineString" | "Circle" | "Polygon", callback?: (feature) => void, styles: ol.style.Style[] = [this.DefaultStyle]
+  public Draw(type?: "Box" | "LineString" | "Circle" | "Polygon", callback?: (feature) => void, styles?: (f: ol.Feature) => ol.style.Style[]
     , features?: Array<ol.Feature>, id: string = "1", multi: boolean = false): ol.interaction.Interaction {
     if (!this.DrawL) {
       this.DrawL = new ol_layer_vector({
         source: new ol_source_vector(),
-        zIndex: 105,
-        style: styles
+        zIndex: 105
       });
       this.Map.addLayer(this.DrawL);
     }
+    this.DrawL.setStyle((f: ol.Feature) => {
+      if (styles) return styles(f)
+      else {
+        return [this.DefaultStyle];
+      }
+    })
     let source = this.DrawL.getSource();
     if (features) source.addFeatures(features);
     //drawing logic

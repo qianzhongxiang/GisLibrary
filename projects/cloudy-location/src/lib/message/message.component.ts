@@ -11,7 +11,10 @@ import { Component, OnInit, Input, AfterViewInit } from '@angular/core';
 })
 export class MessageComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
-    this.MessageService.Run(item => this.MessageService.MsgFormat(item.Title, item.AssetName)
+    this.MessageService.Run(item => {
+      item.AssetName = this.AssetService.Get(item.Uid, item.DevType).Title;
+      return this.MessageService.MsgFormat(item.Title, item.AssetName)
+    }
     )
   }
   constructor(private AssetService: AssetService, public MessageService: MessageService) { }

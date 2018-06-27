@@ -14,6 +14,8 @@ export interface IStyleOptions {
     font?: string
     strokeWidth?: number
     strokeColor?: string
+    iconSize?: number
+    iconFont?: string
 }
 export interface IGraphic extends IComposit {
     GetStyle(options: IStyleOptions): ol.style.Style[]
@@ -42,16 +44,18 @@ export abstract class Graphic extends Composit {
     public Buid(position: [number, number], type?: string): ol.Feature {  //TODO 当前还未使用绝对坐标体系
         return BaseGeometry.GetPoint(position, type);
     }
-    protected Style(type: "arrow" | "circle" = 'circle', options?: IStyleOptions): ol.style.Style[] {
+    protected Style(type: "icon" | "arrow" | "circle" = 'circle', options?: IStyleOptions): ol.style.Style[] {
         options = Object.assign({
             visable: true, color: this.Color,
-            rotation: 0, front: "Normal 14px Arial",
+            rotation: 0, font: "Normal 16px Arial bold",
             strokeWidth: 3, strokeColor: "white"
         }, options)
         if (!options.visable || !this.Visable) return null;
         switch (type) {
             case "arrow":
                 return BaseMaterial.GetArrowMaterial(options);
+            case "icon":
+                return BaseMaterial.GetNomalIconMaterial(options)
             case "circle":
             default:
                 return BaseMaterial.GetPointMaterial(options);
@@ -81,7 +85,7 @@ class GraphicFactory implements IGraphicFactory {
      * @param name  such as "Map" not "MapGraphic"
      */
     GetComponent(name: string): IGraphic {
-        if (!name || !this.Types[name]) name = "base";
+        if (!name) name = "base";
         name = name.toLowerCase();
         return this.Pool[name] || (this.Pool[name] = new (this.Types[name] || this.Types["base"])())
     }

@@ -27,24 +27,24 @@ export class MapComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     this.OlMapService.Show({ target: this.container.nativeElement })
     if (this.DeviceService) {
+      let layer = this.DeviceService.GetLayer();
       if (this.DeviceReceive) {
-        let layer = this.DeviceService.GetLayer();
         this.OlMapService.AddLayer(layer);
         this.DeviceService.Bind(this.DeviceService.Events.WSOpened, this.InitWSType.bind(this))
         this.DevPositionInit();
         this.DeviceService.DataProcess(this.DataProcessCallback.bind(this))
-        if (this.Popup)
-          this.ShowPopup(layer);
-        if (this.AssetClick) {
-          this.OlMapService.SelectInLayer([layer], (fs) => {
-            let f = fs[0]
-            if (!f) return;
-            let id = f.getId() as string, type = f.get("type")
-            this.AssetClick(id, type);
-          })
-        }
       } else if (this.DeviceLay) {
         this.OlMapService.AddLayer(this.DeviceService.GetLayer());
+      }
+      if (this.Popup)
+        this.ShowPopup(layer);
+      if (this.AssetClick) {
+        this.OlMapService.SelectInLayer([layer], (fs) => {
+          let f = fs[0]
+          if (!f) return;
+          let id = f.getId() as string, type = f.get("type")
+          this.AssetClick(id, type);
+        }, true, false)
       }
     }
   }

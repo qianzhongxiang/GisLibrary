@@ -37,21 +37,21 @@ export abstract class BaseMaterial {
      * @param title 
      */
     public static GetArrowMaterial(options: IStyleOptions): ol.style.Style[] {
-        var iconFont = 'font-awesome';
-        var iconFontText = '\uf041'; // equates to fa-trash icon
-        var iconSize = 18;
-        var col = '#F58026';
+        var iconFont = 'FontAwesome';
+        var iconFontText = "\uf176"; // equates to fa-trash icon
+        var iconSize = options.iconSize || 22;
         let arrow = new Style({
             text: new Text({
                 font: 'Normal ' + iconSize + 'px ' + iconFont,
                 text: iconFontText,
-                fill: new Fill({ color: col }),
-                rotation: options.rotation
+                fill: new Fill({ color: options.color }),
+                rotation: options.rotation,
+                stroke: new Stroke({ color: options.strokeColor, width: options.strokeWidth })
             })
         });
         let text = new Style({
             text: new Text({
-                offsetY: -12,
+                offsetY: -18,
                 fill: new Fill({ color: options.color }),
                 stroke: new Stroke({ color: options.strokeColor, width: options.strokeWidth }),
                 font: options.font,
@@ -60,5 +60,33 @@ export abstract class BaseMaterial {
         if (options.title) text.getText().setText(options.title);
         return [arrow, text];
     }
-
+    /**
+     * 
+     * @param iconFontText likes '\uf041'; // equates to fa-trash icon
+     * @param options 
+     */
+    public static GetNomalIconMaterial(options: IStyleOptions): ol.style.Style[] {
+        var iconFont = 'FontAwesome';
+        var iconFontText = options.iconFont; // equates to fa-trash icon
+        var iconSize = options.iconSize;
+        let arrow = new Style({
+            text: new Text({
+                font: 'Normal ' + iconSize + 'px ' + iconFont,
+                text: iconFontText,
+                fill: new Fill({ color: options.color }),
+                rotation: options.rotation,
+                stroke: new Stroke({ color: options.strokeColor, width: options.strokeWidth })
+            })
+        });
+        let text = new Style({
+            text: new Text({
+                offsetY: -18,
+                fill: new Fill({ color: options.color }),
+                stroke: new Stroke({ color: options.strokeColor, width: options.strokeWidth }),
+                font: options.font,
+            })
+        });
+        if (options.title) text.getText().setText(options.title);
+        return [arrow, text];
+    }
 }

@@ -10,7 +10,7 @@ import { Component, OnInit, Inject, AfterViewInit, ViewChild, ElementRef } from 
 export class OfflineAssetComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
   }
-  public displayedColumns = ['id', 'type', 'name', 'last-online-time']
+  public displayedColumns = ['id', 'category', 'name', 'last-online-time']
   public Data: { dataSource: Array<{ Uid: string, Type: string, Title: string, LastTime: string }> }
   constructor(public ModalRef: MatDialogRef<OfflineAssetComponent>,
     @Inject(MAT_DIALOG_DATA) data: any) {

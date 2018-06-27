@@ -27,7 +27,10 @@ export class DeviceService extends ObserverableWMediator {
   public Coms: { [key: string]: GraphicOutInfo } = {};
   private VectorSource: ol.source.Vector
   private Layer: ol.layer.Vector
-  public Events = { WSOpened: "WSOpened", WSClosed: "WSClosed", TweenStart: "TweenStart", DeviceUpdate: "DeviceUpdate", MsgChange: "MsgChange" }
+  public Events = {
+    WSOpened: "WSOpened", WSClosed: "WSClosed", TweenStart: "TweenStart"
+    , DeviceUpdate: "DeviceUpdate", MsgChange: "MsgChange", StyleOptionCreated: "StyleOptionCreated"
+  }
   private HighlightedId: string
   private autoReconnectInterval: number = 5000
   private duration: number = 5000
@@ -44,18 +47,19 @@ export class DeviceService extends ObserverableWMediator {
     this.VectorSource = new VertorSource();
     this.Layer = new VertorLayer({
       source: this.VectorSource, style: (feature) => {
-        let f = (feature as ol.Feature), id = f.getId(), type = f.get("type"), c = this.Coms[id]
+        let f = (feature as ol.Feature), id = f.getId(), c = this.Coms[id], type = c.type
           , direction = c.Direction
-        if (this.Filter && !c.Visable) { c.Visable = this.Filter(c) }
-        let v = c ? c.Visable : false;
+        if (this.Filter) { c.Visable = this.Filter(c) }
+        else c.Visable = true;
         let ops: IStyleOptions = {
-          visable: v, color: f.get('mainColor'), title: f.get('name') || id
+          visable: c.Visable, color: f.get('mainColor'), title: f.get('name') || id
           , rotation: direction
         }
         if (c && c.Offline) ops.color = "gray";
         if (this.HighlightedId && this.HighlightedId == id) {
           Object.assign(ops, { strokeWidth: 5, strokeColor: 'yellow', zIndex: 99, font: "Normal bold 18px Arial" })
         }
+        this.SetState(this.Events.StyleOptionCreated, { options: ops, outinfo: c })
         let s = GetGraphicFactory().GetComponent(type).GetStyle(ops);
         return s;
       }
@@ -80,7 +84,14 @@ export class DeviceService extends ObserverableWMediator {
   public GetPosition(Id: string): [number, number] {
     return (this.Layer.getSource().getFeatureById(Id).getGeometry() as ol.geom.Point).getCoordinates();
   }
-
+  public GetFeature(Id: string): ol.Feature {
+    return this.Layer.getSource().getFeatureById(Id)
+  }
+  public UpdateTitle(id: string, type: string, title: string) {
+    let f = this.Layer.getSource().getFeatureById(id)
+    if (!f) { LogHelper.Log("UpdateTitle：can not found feature with id:" + id); return; }
+    f.set("name", title);
+  }
   public Find(fn: (obj: GraphicOutInfo) => boolean): Array<GraphicOutInfo> {
     let res: Array<GraphicOutInfo> = []
     for (let n in this.Coms) {
@@ -287,7 +298,7 @@ export class DeviceService extends ObserverableWMediator {
   public GenerateUniqueKey(id: string, type: string) {
     return `${id}_${type}`;
   }
-  public Resolve(datas: Array<DataItem>, callback: (gif: GraphicOutInfo, type: DeviceStatus) => void
+  public Resolve(datas: Array<DataItem>, callback: (gif: GraphicOutInfo, type: DeviceStatus, dataItem: DataItem) => void
     , posiConvertor?: (posi: [number, number]) => [number, number]) {
     for (var i = 0; i < datas.length; i++) {
       let data: DataItem = datas[i], now = new Date();
@@ -309,6 +320,7 @@ export class DeviceService extends ObserverableWMediator {
         }
         feature = graphic.Buid(ps);
         feature.setId(profile.Id);
+        feature.set("type", profile.type)
         this.VectorSource.addFeature(feature);
         this.Coms[data.UniqueId] = profile;
         type = data.Offline ? DeviceStatus.NewOffline : DeviceStatus.New;
@@ -325,7 +337,7 @@ export class DeviceService extends ObserverableWMediator {
       profile.Location = { x: ps[0], y: ps[1] }
       profile.Offline = data.Offline;
       profile.Direction = data.Direction;
-      callback(profile, type);
+      callback(profile, type, data);
       this.SetState(this.Events.DeviceUpdate, { data: profile, type: type })
       if (type == DeviceStatus.New || type == DeviceStatus.NewOffline) {
         feature.setProperties({ name: profile.Title })

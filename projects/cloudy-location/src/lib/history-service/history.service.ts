@@ -25,7 +25,7 @@ export class HistoryService {
   }
   public SetCurrentIndex(index: number) {
     this.currentIndex = index;
-
+    this.currentUpdates.forEach(c => c(this.Data[index], index));
   }
   public Launch(index: number = this.currentIndex) {
     if (!this.Data) return;
@@ -76,6 +76,7 @@ export class HistoryService {
     this.Jsonp(url, postdata, cb)
     this.Launch();
   }
+
   private Jsonp(url: string, data: any, callback: (data: Array<DataItem>) => void) {
     jQuery.ajax(url, {
       type: "GET", dataType: "jsonp", data: data, success: callback, error: (xhr, s, e) => {

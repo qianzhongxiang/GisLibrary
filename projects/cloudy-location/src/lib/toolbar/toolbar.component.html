@@ -2,18 +2,18 @@
   <input type="search" class="form-control border-0" placeholder={{SearchName}}/>
 </div> -->
 
-<div class="form-inline h-100">
+<div class="form-inline h-100" *ngIf="!mobile">
   <!-- categrate -->
-  <div *ngIf="!mobile">
-    <div class="form-check form-check-inline border-left h-100" *ngFor="let cate of MainPageCates" style="width:180px;padding:0 20px;">
-      <input type="checkbox" (change)="cate.visable=!cate.visable;FilterChanged();" [checked]="cate.visable" class="form-check-input"
-        id="{{cate.code}}_checkbox" style="width:18px;height:18px;" />
-      <div class="cate-icon rounded-circle" [style.backgroundColor]="cate.color">
-        <i class={{cate.class}}></i>
-      </div>
-      <label class="form-check-label" for="{{cate.code}}_checkbox" style="font-size:14px;color:#2c2336;font-weight:bold;">{{cate.title}}({{cate.count||0}})</label>
+  <div class="form-check form-check-inline border-left h-100" *ngFor="let cate of MainPageCates" style="width:180px;padding:0 20px;">
+    <input type="checkbox" (change)="cate.visable=!cate.visable;FilterChanged();" [checked]="cate.visable" class="form-check-input"
+      id="{{cate.code}}_checkbox" style="width:18px;height:18px;" />
+    <div class="cate-icon rounded-circle" [style.backgroundColor]="cate.color">
+      <i class={{cate.class}}></i>
     </div>
+    <label class="form-check-label" for="{{cate.code}}_checkbox" style="font-size:14px;color:#2c2336;font-weight:bold;">{{cate.title}}({{cate.count||0}})</label>
   </div>
+</div>
+<div class="form-inline h-100">
   <div class="form-group border-left px-2 h-100">
     <button class="btn btn-sm" (click)="OpenAdvancedSearch()">高级搜索</button>
   </div>

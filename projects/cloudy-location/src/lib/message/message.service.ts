@@ -44,8 +44,12 @@ export class MessageService {
           break;
         case 'mqtt':
           this.WsService.Mqtt(this.WarningService, this.User, this.Pd).Subscribe('msg', (payload) => {
-            let d = JSON.parse(payload);
-            this.PushMsg({ msg: callback(d), data: d });
+            let ds = JSON.parse(payload) as MsgEntity[];
+            if (ds) {
+              ds.forEach(d => {
+                this.PushMsg({ msg: callback(d), data: d });
+              })
+            }
           })
           break;
       }

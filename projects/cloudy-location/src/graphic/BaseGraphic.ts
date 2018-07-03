@@ -7,16 +7,11 @@ export class BaseGraphic extends Graphic implements IGraphic {
 
     public constructor(color: string = "blue") {
         super();
-        this.Color = color;
-        this.TypeCode = 1;
-        let scale = 16;
-        this.Long = 1;
-        this.Height = 1;
-        this.Width = 1;
+        this.Options.color = color;
     }
 
-    public GetStyle(options?: IStyleOptions): ol.style.Style[] {
-        return super.Style("circle", options);
+    public Style(): ol.style.Style[] {
+        return BaseMaterial.GetPoint(this.Options);
     }
 
 }

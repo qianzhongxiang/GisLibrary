@@ -1,10 +1,10 @@
 import { Composit, Singleton, LogHelper, IComposit } from "vincijs";
-import { BaseGeometry } from "./BaseGeometry";
-import { BaseMaterial } from "./BaseMaterial";
+import { Geometries } from "./geometries";
+import { Materials, StyleType, STYLETYPE } from "./materials";
 
 export interface IStyleOptions {
     color?: string
-    title?: string
+    content?: string
     /**
      * by default, true
      */
@@ -14,57 +14,51 @@ export interface IStyleOptions {
     font?: string
     strokeWidth?: number
     strokeColor?: string
-    iconSize?: number
-    iconFont?: string
-}
-export interface IGraphic extends IComposit {
-    GetStyle(options: IStyleOptions): ol.style.Style[]
-    Buid(position: [number, number], type?: string): ol.Feature
+    size?: number
+    offsetX?: number
+    offsetY?: number
 }
 
-export abstract class Graphic extends Composit {
-    protected Color: string = "gray"
+export interface IGraphic extends IComposit {
+    Style(): ol.style.Style[]
+    GetGeom(position: [number, number], type?: string): ol.Feature
+}
+
+export abstract class Graphic extends Composit implements IGraphic {
     public Visable: boolean = true;
-    public TypeCode: number = 0
     public Events = { OnLoaded: "onloaded" }
-    /**m outter*/
-    public Long: number = 0
-    /**m outter*/
-    public Width: number = 0
-    /**m outter*/
-    public Height: number = 0
     protected Graphic: any;
     public Loaded = false
+    // constructor(...composits: IGraphic[]) {
+    //     super();
+    //     if (composits)
+    //         composits.forEach(c => this.Add(c));
+    // }
+    protected Options: IStyleOptions = {
+        visable: true, color: "blue",
+        rotation: 0, font: "Bold 16px Arial",
+        strokeWidth: 3, strokeColor: "white"
+    }
     // public Parent(): any {
     //     alert("共享部件没有显示指定父部件");
     // }
-    /**
-     * clone graphic and show it on scene
-     */
-    public Buid(position: [number, number], type?: string): ol.Feature {  //TODO 当前还未使用绝对坐标体系
-        return BaseGeometry.GetPoint(position, type);
+    public GetGeom(position: [number, number], type?: string): ol.Feature {
+        return Geometries.GetPoint(position, type);
     }
-    protected Style(type: "icon" | "arrow" | "circle" = 'circle', options?: IStyleOptions): ol.style.Style[] {
-        options = Object.assign({
-            visable: true, color: this.Color,
-            rotation: 0, font: "Normal 16px Arial bold",
-            strokeWidth: 3, strokeColor: "white"
-        }, options)
-        if (!options.visable || !this.Visable) return null;
-        switch (type) {
-            case "arrow":
-                return BaseMaterial.GetArrowMaterial(options);
-            case "icon":
-                return BaseMaterial.GetNomalIconMaterial(options)
-            case "circle":
-            default:
-                return BaseMaterial.GetPointMaterial(options);
-        }
+    protected AssignOption(options?: IStyleOptions): IStyleOptions {
+        return Object.assign({}, this.Options, options)
+    }
+    public Style(): ol.style.Style[] {
+        if (!this.Children || this.Children.length <= 0) return null;
+        if (!this.Options.visable || !this.Visable) return null;
+
+        let res: ol.style.Style[] = []
+        this.Children.forEach((c: IGraphic) => {
+            res.push(...c.Style())
+        })
+        return res;
     }
 
-    public OnMoved(o3d: any, target: [number, number]) {
-
-    }
     public ToString(data: any): string {
         return this.Graphic ? this.Graphic.name : undefined;
     }

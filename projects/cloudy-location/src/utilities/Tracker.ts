@@ -18,8 +18,13 @@ export class Tracker {
         return this;
     }
     public AddPoints(points: [number, number][]): Tracker {
-        points.forEach(p => (this.Feature.getGeometry() as ol.geom.LineString).appendCoordinate(p))
+        let geom = this.Feature.getGeometry() as ol.geom.LineString
+        points.forEach(p => geom.appendCoordinate(p))
+
         return this;
+    }
+    public Simplify(number: number) {
+        (this.Feature.getGeometry() as ol.geom.LineString).simplify(number)
     }
     public Clean() {
         (this.Feature.getGeometry() as ol.geom.LineString).setCoordinates([])

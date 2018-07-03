@@ -5,19 +5,15 @@ import { BaseMaterial } from "./BaseMaterial";
 export class NormalIconGraphic extends Graphic implements IGraphic {
     public constructor(private iconText: string, color: string = "blue", private iconSize: number = 18) {
         super();
-        this.Color = color
-        this.TypeCode = 2;
-        let scale = 16;
-        this.Long = 1;
-        this.Height = 1;
-        this.Width = 1;
+        this.Options.color = color;
     }
-    public Buid(position: [number, number], type: string = 'Icon'): ol.Feature {
-        return super.Buid(position, type);
+    public GetGeom(position: [number, number], type: string = 'icon'): ol.Feature {
+        return super.GetGeom(position, type);
     }
-    public GetStyle(options?: IStyleOptions): ol.style.Style[] {
-        options.iconFont = this.iconText;
-        options.iconSize = this.iconSize;
-        return super.Style('icon', options);
-    }
+
+        public Style(): ol.style.Style[] {
+        this.Options.content = this.iconText;
+    this.Options.size = this.iconS ize;
+return BaseMaterial.GetNomalIconMaterial(this.Options);
+            
 }

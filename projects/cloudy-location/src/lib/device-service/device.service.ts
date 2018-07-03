@@ -1,7 +1,10 @@
+import { Decorator } from './../../graphic/decorator';
+import { OfflineDecorator } from './../../graphic/offlineDecorator';
+import { HighlightDecorator } from './../../graphic/highlightDecorator';
 import { Messaging } from './../../utilities/mqttws31';
 import { BaseGraphic } from './../../graphic/BaseGraphic';
 import { Injectable } from '@angular/core';
-import { GraphicOutInfo, GetGraphicFactory, Graphic, IStyleOptions } from "./../../graphic/Graphic";
+import { GraphicOutInfo, GetGraphicFactory, Graphic, IStyleOptions, IGraphic } from "./../../graphic/Graphic";
 import { GetConfigManager, IObseverable, ObserverableWMediator, LogHelper, WebSocketor } from 'vincijs';
 import VertorSource from 'ol/source/Vector'
 import VertorLayer from 'ol/layer/Vector'
@@ -12,11 +15,14 @@ import * as mqtt from 'mqtt'
 import { MapConifg } from './../../utilities/config';
 import * as jQuery from 'jquery'
 import { DeviceStatus } from '../../utilities/enum';
-import { BaseMaterial } from '../../graphic/BaseMaterial';
 // import ol_style = require('ol/style/Style')
 // import ol_stroke = require('ol/style/Stroke')
 
 const DIRECTION = "direction"
+GetGraphicFactory().SetComponent(BaseGraphic, 'base');
+GetGraphicFactory().SetComponent(HighlightDecorator, 'highlight');
+GetGraphicFactory().SetComponent(OfflineDecorator, 'offline');
+GetGraphicFactory().SetComponent(Decorator, 'decorator');
 
 /**
  * manager dependent on TWEEN
@@ -40,28 +46,28 @@ export class DeviceService extends ObserverableWMediator {
   private Offlines: Array<{ id: string, type: string }>
   constructor() {
     super();
-    GetGraphicFactory().SetComponent(BaseGraphic, 'base');
-    // GetGraphicFactory().SetComponent(CellPhoneGraphic, 'cellphone');
-    // GetGraphicFactory().SetComponent(GPSTagGraphic, 'gpstag');
-    // GetGraphicFactory().SetComponent(IncarGraphic, 'incar');
     this.VectorSource = new VertorSource();
     this.Layer = new VertorLayer({
       source: this.VectorSource, style: (feature) => {
         let f = (feature as ol.Feature), id = f.getId(), c = this.Coms[id], type = c.type
           , direction = c.Direction
-        if (this.Filter) { c.Visable = this.Filter(c) }
-        else c.Visable = true;
-        let ops: IStyleOptions = {
-          visable: c.Visable, color: f.get('mainColor'), title: f.get('name') || id
+        if (this.Filter && !this.Filter(c)) return [];
+        let graphic = GetGraphicFactory().GetComponent(type);
+        let decorator: Decorator
+        if (c && c.Offline)
+          decorator = GetGraphicFactory().GetComponent('offline') as Decorator;
+        else if (this.HighlightedId && this.HighlightedId == id) {
+          decorator = GetGraphicFactory().GetComponent('highlight') as Decorator
+        } else {
+          decorator = GetGraphicFactory().GetComponent('decorator') as Decorator
+        }
+        decorator.Add(graphic);
+        decorator.SetOptions({
+          color: f.get('mainColor'), content: f.get('name') || id
           , rotation: direction
-        }
-        if (c && c.Offline) ops.color = "gray";
-        if (this.HighlightedId && this.HighlightedId == id) {
-          Object.assign(ops, { strokeWidth: 5, strokeColor: 'yellow', zIndex: 99, font: "Normal bold 18px Arial" })
-        }
-        this.SetState(this.Events.StyleOptionCreated, { options: ops, outinfo: c })
-        let s = GetGraphicFactory().GetComponent(type).GetStyle(ops);
-        return s;
+        })
+
+        return decorator.Style();
       }
     });
     this.Layer.setZIndex(200);
@@ -318,7 +324,7 @@ export class DeviceService extends ObserverableWMediator {
           , Title: data.Name
           , ReveiveTime: now
         }
-        feature = graphic.Buid(ps);
+        feature = graphic.GetGeom(ps);
         feature.setId(profile.Id);
         feature.set("type", profile.type)
         this.VectorSource.addFeature(feature);

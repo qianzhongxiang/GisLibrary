@@ -5,7 +5,7 @@ import { Messaging } from './../../utilities/mqttws31';
 import { BaseGraphic } from './../../graphic/BaseGraphic';
 import { Injectable } from '@angular/core';
 import { GraphicOutInfo, GetGraphicFactory, Graphic, IStyleOptions, IGraphic } from "./../../graphic/Graphic";
-import { GetConfigManager, IObseverable, ObserverableWMediator, LogHelper, WebSocketor } from 'vincijs';
+import { GetConfigManager, IObseverable, ObserverableWMediator, LogHelper, WebSocketor, Composit } from 'vincijs';
 import VertorSource from 'ol/source/Vector'
 import VertorLayer from 'ol/layer/Vector'
 import ol_proj from 'ol/proj'
@@ -46,6 +46,7 @@ export class DeviceService extends ObserverableWMediator {
   private Offlines: Array<{ id: string, type: string }>
   constructor() {
     super();
+
     this.VectorSource = new VertorSource();
     this.Layer = new VertorLayer({
       source: this.VectorSource, style: (feature) => {
@@ -61,6 +62,7 @@ export class DeviceService extends ObserverableWMediator {
         } else {
           decorator = GetGraphicFactory().GetComponent('decorator') as Decorator
         }
+        decorator.RemoveAll();
         decorator.Add(graphic);
         decorator.SetOptions({
           color: f.get('mainColor'), content: f.get('name') || id
@@ -75,7 +77,9 @@ export class DeviceService extends ObserverableWMediator {
   public Init(Config: MapConifg) {
     this.Config = Config
   }
-
+  public AddGraphic(type: typeof Composit, name: string) {
+    GetGraphicFactory().SetComponent(type, name);
+  }
   public GetLayer(): ol.layer.Vector {
     return this.Layer;
   }

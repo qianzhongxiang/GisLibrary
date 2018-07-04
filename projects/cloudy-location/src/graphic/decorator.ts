@@ -1,7 +1,7 @@
 import { Graphic, IGraphic, IStyleOptions } from "./Graphic";
 import { Geometries } from "./geometries";
 import { Materials, StyleType, STYLETYPE } from "./materials";
-export const CONSTNAME = "styleName"
+export const STYLENAME = "styleName"
 export class Decorator extends Graphic implements IGraphic {
     /**
      * to set text content; color; 
@@ -14,7 +14,7 @@ export class Decorator extends Graphic implements IGraphic {
         switch (styleType) {
             case StyleType.text:
                 let t = style.getText();
-                t.getStroke().setColor(this.Options.color)
+                t.getFill().setColor(this.Options.color);
                 t.setText(this.Options.content)
                 break;
             case StyleType.fontIcon:
@@ -23,10 +23,8 @@ export class Decorator extends Graphic implements IGraphic {
             case StyleType.iconImg:
 
                 break;
-            case StyleType.point: {
-                let c = style.getImage() as ol.style.Circle;
-                c.getFill().setColor(this.Options.color);
-            }
+            case StyleType.point:
+                style.setImage(Materials.GetCircleImage(this.Options.color));
                 break;
             default: {
 
@@ -37,7 +35,7 @@ export class Decorator extends Graphic implements IGraphic {
     }
     public Style(): ol.style.Style[] {
         let styles = super.Style();
-        styles.forEach(s => this.Decorate(s, s[STYLETYPE] as any, s[CONSTNAME]))
+        styles.forEach(s => this.Decorate(s, s[STYLETYPE] as any, s[STYLENAME]))
         return styles;
     }
 }

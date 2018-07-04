@@ -1,18 +1,19 @@
 import { Graphic, IGraphic, IStyleOptions } from "./Graphic";
-import { Geometries } from "./geometries";
-import { Materials } from "./materials";
+import { Geometries } from "./Geometries";
+import { Materials } from "./Materials";
 
-export class ArrowGraphic extends Graphic implements IGraphic {
+export class FontIconGraphic extends Graphic implements IGraphic {
     public constructor() {
         super();
         this.Options.color = "blue";
+        this.Options.content = "\uf1b9";//car icon
+        this.Options.size = 18;
     }
-    public GetGeom(position: [number, number], type: string = 'arrow'): ol.Feature {
+    public GetGeom(position: [number, number], type: string = 'icon'): ol.Feature {
         return super.GetGeom(position, type);
     }
 
     public Style(): ol.style.Style[] {
-        this.Options.content = '\uf176';
         return [...super.Style(), ...Materials.GetFontIcon(this.Options)];
     }
 }

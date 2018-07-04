@@ -25,7 +25,6 @@ export interface IGraphic extends IComposit {
 }
 
 export abstract class Graphic extends Composit implements IGraphic {
-    public Visable: boolean = true;
     public Events = { OnLoaded: "onloaded" }
     protected Graphic: any;
     public Loaded = false
@@ -35,8 +34,7 @@ export abstract class Graphic extends Composit implements IGraphic {
     //         composits.forEach(c => this.Add(c));
     // }
     protected Options: IStyleOptions = {
-        visable: true, color: "blue",
-        rotation: 0, font: "Bold 16px Arial",
+        color: "blue", rotation: 0, font: "Bold .75rem Arial",
         strokeWidth: 3, strokeColor: "white"
     }
     // public Parent(): any {
@@ -49,8 +47,7 @@ export abstract class Graphic extends Composit implements IGraphic {
         return Object.assign({}, this.Options, options)
     }
     public Style(): ol.style.Style[] {
-        if (!this.Children || this.Children.length <= 0) return null;
-        if (!this.Options.visable || !this.Visable) return null;
+        if (!this.Children || this.Children.length <= 0) return [];
 
         let res: ol.style.Style[] = []
         this.Children.forEach((c: IGraphic) => {
@@ -65,12 +62,12 @@ export abstract class Graphic extends Composit implements IGraphic {
 }
 export interface IGraphicFactory {
     GetComponent(name: string): IGraphic
-    SetComponent(type: typeof Graphic, name?: string): void
+    SetComponent(type: typeof Composit, name?: string): void
 }
 class GraphicFactory implements IGraphicFactory {
     private Types = {}
     private Pool = {}
-    SetComponent(type: typeof Graphic, name?: string): void {
+    SetComponent(type: typeof Composit, name?: string): void {
         name = name || type.name.substr(0, name.length - 7);
         this.Types[name.toLowerCase()] = type; // <ie9 will dosen't work
     }

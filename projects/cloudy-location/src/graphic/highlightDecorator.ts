@@ -18,6 +18,7 @@ export class HighlightDecorator extends Decorator {
 
                 break;
             case StyleType.point: {
+                //无效
                 let c = style.getImage() as ol.style.Circle;
                 let stroke = c.getStroke();
                 stroke.setColor("yellow");

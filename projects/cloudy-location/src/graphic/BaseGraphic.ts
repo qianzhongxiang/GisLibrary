@@ -1,17 +1,17 @@
 import { Graphic, IGraphic, IStyleOptions } from "./Graphic";
-import { BaseGeometry } from "./BaseGeometry";
-import { BaseMaterial } from "./BaseMaterial";
+import { Geometries } from "./geometries";
+import { Materials } from "./materials";
 
 
 export class BaseGraphic extends Graphic implements IGraphic {
 
-    public constructor(color: string = "blue") {
+    public constructor() {
         super();
-        this.Options.color = color;
+        this.Options.color = "blue";
     }
 
     public Style(): ol.style.Style[] {
-        return BaseMaterial.GetPoint(this.Options);
+        return [...super.Style(), ...Materials.GetPoint(this.Options)];
     }
 
 }

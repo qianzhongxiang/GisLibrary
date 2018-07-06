@@ -70,6 +70,8 @@ class GraphicFactory implements IGraphicFactory {
     SetComponent(type: typeof Composit, name?: string): void {
         name = name || type.name.substr(0, name.length - 7);
         this.Types[name.toLowerCase()] = type; // <ie9 will dosen't work
+        // LogHelper.Log(name)
+        // console.log(this.Types)
     }
     /**
      * gain conincident Component 
@@ -78,6 +80,8 @@ class GraphicFactory implements IGraphicFactory {
     GetComponent(name: string): IGraphic {
         if (!name) name = "base";
         name = name.toLowerCase();
+        // console.log(name)
+        // console.log(this.Types)
         return this.Pool[name] || (this.Pool[name] = new (this.Types[name] || this.Types["base"])())
     }
 }

@@ -11,6 +11,7 @@ export interface DataItem {
     Duration: number
     Offline: boolean
     Direction: number
+    CustomInterval: number
 }
 export interface AssetInfo {
     Id: string

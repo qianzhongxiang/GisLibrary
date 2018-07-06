@@ -1,3 +1,4 @@
+import { TextGraphic } from './../../graphic/textGraphic';
 import { Decorator } from './../../graphic/decorator';
 import { OfflineDecorator } from './../../graphic/offlineDecorator';
 import { HighlightDecorator } from './../../graphic/highlightDecorator';
@@ -19,10 +20,14 @@ import { DeviceStatus } from '../../utilities/enum';
 // import ol_stroke = require('ol/style/Stroke')
 
 const DIRECTION = "direction"
-GetGraphicFactory().SetComponent(BaseGraphic, 'base');
-GetGraphicFactory().SetComponent(HighlightDecorator, 'highlight');
-GetGraphicFactory().SetComponent(OfflineDecorator, 'offline');
-GetGraphicFactory().SetComponent(Decorator, 'decorator');
+class point extends BaseGraphic {
+  constructor() {
+    super();
+    this.Options.color = "blue";
+    this.Add(new TextGraphic());
+  }
+}
+
 
 /**
  * manager dependent on TWEEN
@@ -46,7 +51,10 @@ export class DeviceService extends ObserverableWMediator {
   private Offlines: Array<{ id: string, type: string }>
   constructor() {
     super();
-
+    GetGraphicFactory().SetComponent(point, 'base');
+    GetGraphicFactory().SetComponent(HighlightDecorator, 'highlight');
+    GetGraphicFactory().SetComponent(OfflineDecorator, 'offline');
+    GetGraphicFactory().SetComponent(Decorator, 'decorator');
     this.VectorSource = new VertorSource();
     this.Layer = new VertorLayer({
       source: this.VectorSource, style: (feature) => {

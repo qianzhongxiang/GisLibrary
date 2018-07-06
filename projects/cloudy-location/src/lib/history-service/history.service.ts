@@ -63,42 +63,25 @@ export class HistoryService {
       , dataIndex = 0, index = 1, count = 200;
 
     // let postdata = { uid: uid, type: type, stime: sTime.toISOString(), etime: eTime.toISOString(), index: 1, count: 200 };
-    let postdata = Object.assign(datas[dataIndex], { index: index, count: count, interval: 1 });// { uid: "352544071943238", type: "SF", stime: sTime.toISOString(), etime: eTime.toISOString(), index: 1, count: 200 };
-    let cb = ((d) => {
-      if (typeof d === "string") d = JSON.parse(d);
-      this.Data = this.Data.concat(d);
-      if (callback) callback(d);
-      this.callbacks.forEach(c => c(d));
-      if ((d as Array<any>).length >= postdata.count) {
+    let postdata = Object.assign(datas[dataIndex], { index: index, count: count, interval: 15 });// { uid: "352544071943238", type: "SF", stime: sTime.toISOString(), etime: eTime.toISOString(), index: 1, count: 200 };
+    let cb = ((ds: string | Array<DataItem>) => {
+      if (typeof ds === "string") ds = JSON.parse(ds) as Array<DataItem>;
+      let oneMinData = ds.filter(d => d.CustomInterval == 60)
+      this.Data = this.Data.concat(oneMinData);
+      if (callback) callback(oneMinData);
+      this.callbacks.forEach(c => c(oneMinData));
+      this.routeCallbacks.forEach(c => c(ds as Array<DataItem>));
+      if ((ds as Array<any>).length >= postdata.count) {
         postdata.index++;
         this.Jsonp(url, postdata, cb)
       } else if (datas[++dataIndex]) {
-        postdata = Object.assign(datas[dataIndex], { index: index, count: count, interval: 1 });
+        postdata = Object.assign(datas[dataIndex], { index: index, count: count, interval: 15 });
         this.Jsonp(url, postdata, cb)
       }
     }).bind(this);
     this.Jsonp(url, postdata, cb)
-    this.GetRouteData(datas)
+    // this.GetRouteData(datas)
     this.Launch();
-  }
-  private GetRouteData(datas: Array<{ uid: string, type: string, sTime: string, eTime: string }>) {
-    let res: Location, url = this.Config.webService + `/HistoryGet?callback=?`
-      , dataIndex = 0, index = 1, count = 200;
-
-    // let postdata = { uid: uid, type: type, stime: sTime.toISOString(), etime: eTime.toISOString(), index: 1, count: 200 };
-    let postdata = Object.assign(datas[dataIndex], { index: index, count: count, interval: 0 });
-    let cb = ((d) => {
-      if (typeof d === "string") d = JSON.parse(d);
-      this.routeCallbacks.forEach(c => c(d));
-      if ((d as Array<any>).length >= postdata.count) {
-        postdata.index++;
-        this.Jsonp(url, postdata, cb)
-      } else if (datas[++dataIndex]) {
-        postdata = Object.assign(datas[dataIndex], { index: index, count: count, interval: 0 });
-        this.Jsonp(url, postdata, cb)
-      }
-    }).bind(this);
-    this.Jsonp(url, postdata, cb)
   }
   private Jsonp(url: string, data: any, callback: (data: Array<DataItem>) => void) {
     jQuery.ajax(url, {

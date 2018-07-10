@@ -2,6 +2,7 @@ import { Graphic, IGraphic, IStyleOptions } from "./Graphic";
 import { Geometries } from "./geometries";
 import { Materials, StyleType, STYLETYPE } from "./materials";
 export const STYLENAME = "styleName"
+
 export class Decorator extends Graphic implements IGraphic {
     /**
      * to set text content; color; 
@@ -24,7 +25,9 @@ export class Decorator extends Graphic implements IGraphic {
 
                 break;
             case StyleType.point:
-                style.setImage(Materials.GetCircleImage(this.Options.color));
+                style.setImage(Materials.GetCircleImage(this.Options));
+                break;
+            case StyleType.circle:
                 break;
             default: {
 

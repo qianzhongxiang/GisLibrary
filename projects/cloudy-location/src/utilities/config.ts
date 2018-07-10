@@ -9,13 +9,13 @@ export interface LocationConfig {
     "wsType"?: string,
 }
 export interface MapConifg {
-    "geoServerUrl"?: string,
-    "mqttUser"?: string,
-    "mqttPd"?: string,
-    "trackOfComponent"?: boolean,
-    "locationConfig"?: LocationConfig,
+    "geoServerUrl"?: string
+    "mqttUser"?: string
+    "mqttPd"?: string
+    "trackOfComponent"?: boolean
+    "locationConfig"?: LocationConfig
     "msgConfig"?: MsgConfig
-    "webService"?: string,
+    "webService"?: string
     "layers"?: {
         "OMS"?: boolean,
         "bg"?: boolean,
@@ -23,12 +23,13 @@ export interface MapConifg {
         "distance"?: boolean,
         "marks"?: boolean
     },
-    "centerPoint"?: Array<number>,
+    "centerPoint"?: Array<number>
     "centerSrs"?: string
-    "srs"?: string,
-    "zoom"?: number,
-    "geoServerGroup"?: string,
-    "frontEndEpsg"?: string,
+    "srs"?: string
+    "zoom"?: number
+    "zoomrange"?: [number, number]
+    "geoServerGroup"?: string
+    "frontEndEpsg"?: string
     "infoUrl"?: string
 }
 export interface TableConfig {

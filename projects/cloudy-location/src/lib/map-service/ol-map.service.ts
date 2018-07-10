@@ -28,6 +28,8 @@ import ol_PostionControl from 'ol/control/mouseposition';
 import ol_box_selection from 'ol/interaction/DragBox'
 import ol_events_condition from 'ol/events/condition'
 import olpopup from 'ol-popup'
+import overlay from 'ol/Overlay';
+import { olx } from 'openlayers';
 @Injectable()
 export class OlMapService {
   private RouteL: ol.layer.Vector
@@ -69,6 +71,14 @@ export class OlMapService {
   public RemoveLayer(layer) {
     this.Map.removeLayer(layer);
   }
+  public AddOverlay(options: olx.OverlayOptions): ol.Overlay {
+    let o = new overlay(options);
+    this.Map.addOverlay(o);
+    return o;
+  }
+  public RemoveOverlay(overlay: ol.Overlay) {
+    this.Map.removeOverlay(overlay);
+  }
   public AddInteraction(interaction: ol.interaction.Interaction) {
     this.Map.addInteraction(interaction);
   }
@@ -84,6 +94,10 @@ export class OlMapService {
     else // if (control instanceof ol.control.Control)
       this.Map.addControl(control);
   }
+  /**
+   * 初始化地图
+   * @param element 
+   */
   private EnvironmentConfig(element: HTMLElement) {
     let hostName = this.Config.geoServerUrl;
     // let hostName = GetConfigManager().GetConfig("geoServerUrl");
@@ -91,19 +105,15 @@ export class OlMapService {
     control.on('change', (e: ol.events.Event) => {
       // console.log(e);
     });
-
+    let vo: olx.ViewOptions = { center: ol_proj.transform(this.Config.centerPoint, this.Config.centerSrs, 'EPSG:3857'), zoom: this.Config.zoom }
+    if (this.Config.zoomrange) {
+      vo.minZoom = this.Config.zoomrange[0];
+      vo.maxZoom = this.Config.zoomrange[1];
+    }
     this.Map = new ol_Map({
       controls: [control],
       target: element,
-      // layers: [
-      //   new ol_layer_Tile({ source: new ol_source_OSM() }),
-      //   R_BG_Layer({ hostName: hostName }),
-      //   V_Roads_Layer({ hostName: hostName }),
-      //   V_Distance_Layer({ hostName: hostName }),
-      //   V_Marks_Layer({ hostName: hostName })
-      //   // aMapLayer
-      // ],
-      view: new ol_View({ center: ol_proj.transform(this.Config.centerPoint, this.Config.centerSrs, 'EPSG:3857'), zoom: this.Config.zoom })
+      view: new ol_View(vo)
     });
 
     if (this.Config.layers.OMS) this.Map.addLayer(new ol_layer_Tile({ source: new ol_source_OSM() }));

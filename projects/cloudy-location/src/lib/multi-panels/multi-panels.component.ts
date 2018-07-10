@@ -15,12 +15,19 @@ export class MultiPanelsComponent implements OnInit, AfterContentInit {
     // Items: Array<ICate>
     @ContentChildren(MultiPanelsItemComponent)
     public panels: QueryList<MultiPanelsItemComponent>
+
+    @Input("selected-index")
+    public SelectedIndex: number
+
     public SelectedItem: MultiPanelsItemComponent
     constructor() {
 
     }
 
     ngOnInit() {
+        if (!Number.isNaN(this.SelectedIndex)) {
+            this.SelectedItem = this.panels[this.SelectedIndex];
+        }
     }
 
     Select(item: MultiPanelsItemComponent) {

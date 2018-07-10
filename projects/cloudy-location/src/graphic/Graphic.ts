@@ -17,6 +17,7 @@ export interface IStyleOptions {
     size?: number
     offsetX?: number
     offsetY?: number
+    scale?: number
 }
 
 export interface IGraphic extends IComposit {
@@ -107,6 +108,7 @@ export interface GraphicOutInfo {
     Visable?: boolean
     Offline?: boolean
     Direction?: number
+    Repairing?: boolean
 }
 /**
  * this is a function to get GraphicFactory with "singleton" parton

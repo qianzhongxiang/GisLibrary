@@ -3,7 +3,7 @@ import { StyleType } from "./materials";
 
 export class HighlightDecorator extends Decorator {
     protected Decorate(style: ol.style.Style, styleType: StyleType, styleName: string): ol.style.Style {
-        style = super.Decorate(style, styleType, styleName);
+        // style = super.Decorate(style, styleType, styleName);
         style.setZIndex(99)
         switch (styleType) {
             case StyleType.text:

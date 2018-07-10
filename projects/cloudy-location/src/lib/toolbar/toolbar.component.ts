@@ -16,20 +16,21 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dial
 export class ToolbarComponent implements OnInit, AfterViewInit {
   SettingModalRef: any;
   private offline: ICate
+  private unavaliable: ICate
   public mobile: boolean = IsMobile.any() ? true : false
   ngAfterViewInit(): void {
     setInterval(() => { this.Timer = new Date().toLocaleTimeString() }, 1000)
     this.Cates = [...this.Config.items,
-    this.offline = { title: "离线", code: "offline", visable: true, count: this.AssetService.GetAssets().length, color: "gray", mp: false, class: '' }];
+    this.offline = { title: "离线", code: "offline", visable: true, count: this.AssetService.GetAssets().length, color: "gray", mp: false, class: '' }
+    ];
     this.CatesDetailed = this.Config.itemsDetailed
     this.MainPageCates = this.Cates.filter(c => c.mp).concat(this.CatesDetailed.filter(c => c.mp));
     if (this.DeviceService) {
       this.DeviceService.Bind(this.DeviceService.Events.DeviceUpdate, (msg) => {
         var value: { data: GraphicOutInfo, type: DeviceStatus } = msg.Value
-        if (!this.AssetService) return;
+        if (!this.AssetService || !this.AssetService.Get(value.data.Id, value.data.type)) return;
         switch (value.type) {
           case DeviceStatus.New:
-            if (!this.AssetService.Get(value.data.Id, value.data.type)) return;
             this.ChangeCount(value.data.Id, value.data.type, 1)
             this.offline.count--;
             break;
@@ -49,6 +50,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
             break;
         }
       })
+      this.FilterChanged()
     }
   }
   private ChangeCount(id: string, type: string, count: number) {
@@ -128,14 +130,12 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
   FilterChanged() {
     this.DeviceService.SetShowItem((gif) => {
-
       let i = this.AssetService.Get(gif.Id, gif.type)
+      if (!i) return false;
       let catedVisable: boolean = gif.Offline ? this.offline.visable : true;
-      if (i) {
-        let c = i.Category.toLowerCase();
-        let cated = this.CatesDetailed.find(cate => cate.code == c);
-        catedVisable = (cated ? cated.visable : true) && catedVisable;
-      }
+      let c = i.Category.toLowerCase();
+      let cated = this.CatesDetailed.find(cate => cate.code == c);
+      catedVisable = (cated ? cated.visable : true) && catedVisable;
       //the offlines never verify the major types
       if (gif.Offline)
         return catedVisable;

@@ -1,3 +1,4 @@
+import { RepairingDecorator } from './../../graphic/repiringDecorator';
 import { TextGraphic } from './../../graphic/textGraphic';
 import { Decorator } from './../../graphic/decorator';
 import { OfflineDecorator } from './../../graphic/offlineDecorator';
@@ -55,6 +56,7 @@ export class DeviceService extends ObserverableWMediator {
     GetGraphicFactory().SetComponent(HighlightDecorator, 'highlight');
     GetGraphicFactory().SetComponent(OfflineDecorator, 'offline');
     GetGraphicFactory().SetComponent(Decorator, 'decorator');
+    GetGraphicFactory().SetComponent(RepairingDecorator, 'repairing');
     this.VectorSource = new VertorSource();
     this.Layer = new VertorLayer({
       source: this.VectorSource, style: (feature) => {
@@ -62,25 +64,36 @@ export class DeviceService extends ObserverableWMediator {
           , direction = c.Direction
         if (this.Filter && !this.Filter(c)) return [];
         let graphic = GetGraphicFactory().GetComponent(type);
-        let decorator: Decorator
-        if (c && c.Offline)
-          decorator = GetGraphicFactory().GetComponent('offline') as Decorator;
-        else if (this.HighlightedId && this.HighlightedId == id) {
-          decorator = GetGraphicFactory().GetComponent('highlight') as Decorator
-        } else {
-          decorator = GetGraphicFactory().GetComponent('decorator') as Decorator
-        }
+        let decorator = GetGraphicFactory().GetComponent('decorator') as Decorator
         decorator.RemoveAll();
         decorator.Add(graphic);
         decorator.SetOptions({
           color: f.get('mainColor'), content: f.get('name') || id
           , rotation: direction
         })
+        if (c && c.Repairing) {
+          decorator = this.GenerateDecorator(decorator, 'repairing')
+        }
+        if (c && c.Offline) {
+          decorator = this.GenerateDecorator(decorator, 'offline')
+        }
+        if (this.HighlightedId && this.HighlightedId == id) {
+          decorator = this.GenerateDecorator(decorator, 'highlight')
+        }
 
         return decorator.Style();
       }
     });
     this.Layer.setZIndex(200);
+  }
+  /**
+   * 为graphy提供装饰器生成
+   */
+  private GenerateDecorator(subItem: IGraphic, item: string): Decorator {
+    let container = GetGraphicFactory().GetComponent(item) as Decorator;
+    container.RemoveAll();
+    container.Add(subItem)
+    return container;
   }
   public Init(Config: MapConifg) {
     this.Config = Config

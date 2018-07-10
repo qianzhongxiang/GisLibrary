@@ -24,7 +24,7 @@ export class AssetService {
     return this.Assets
   }
   private GetInfoRemote() {
-    new Ajax({ url: this.Url, data: {}, async: false, method: 'GET' }).done(d => {
+    new Ajax({ url: this.Url, data: { time: new Date().getTime() }, async: false, method: 'GET' }).done(d => {
       if (d) {
         if (d instanceof Array)
           this.Assets = d;

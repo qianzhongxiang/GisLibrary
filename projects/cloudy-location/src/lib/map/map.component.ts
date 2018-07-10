@@ -6,7 +6,8 @@ import { Component, OnInit, ViewChild, ElementRef, Optional, AfterViewInit, Inpu
 import { AssetService } from '../asset-service/asset.service';
 import { RequestMsgObject } from './../../utilities/entities';
 import { DeviceStatus } from '../../utilities/enum';
-
+import ZoomSlider from 'ol/control/ZoomSlider'
+import Zoom from 'ol/control/Zoom'
 @Component({
   selector: 'cl-map',
   template: '<div #div class="mapContainer" style="height:100%;"></div>',
@@ -23,6 +24,9 @@ export class MapComponent implements OnInit, AfterViewInit {
   public Popup: ((id: string, type: string) => string) | string | Array<string>
   @Input()
   public AssetClick: (id: string, type: string) => void
+
+  @Input("zoomslider")
+  public Zoomslider: boolean
 
   ngAfterViewInit(): void {
     this.OlMapService.Show({ target: this.container.nativeElement })
@@ -46,6 +50,13 @@ export class MapComponent implements OnInit, AfterViewInit {
           this.AssetClick(id, type);
         }, true, false)
       }
+    }
+    this.InitZoomslider();
+  }
+  private InitZoomslider() {
+    if (this.Zoomslider) {
+      this.OlMapService.AddControl(new Zoom())
+      this.OlMapService.AddControl(new ZoomSlider({}))
     }
   }
   private ShowPopup(layer) {
@@ -115,4 +126,8 @@ export class MapComponent implements OnInit, AfterViewInit {
     let as = this.AssetService.GetAssets().map(a => a.Id_Type);
     this.DeviceService.DevPositionInit(as.join(","), this.DataProcessCallback.bind(this))
   }
+  // public GetSlider(): HTMLElement {
+  //   let slider = (this.container.nativeElement as HTMLDivElement).getElementsByClassName("ol-zoomslider")[0]
+  //   return slider as HTMLElement;
+  // }
 }

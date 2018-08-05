@@ -15,7 +15,7 @@ export default (options: LayerOptions): ol.layer.Image => {
                 'FORMAT': 'image/png',
                 'VERSION': '1.1.1',
                 STYLES: '',
-                LAYERS: `${options.groupName}:Marks`
+                LAYERS: `${options.groupName}:Regions`
             }
         })
     });

@@ -5,6 +5,7 @@ export const STYLENAME = "styleName"
 
 export class Decorator extends Graphic implements IGraphic {
     /**
+    *TODO use AssignOptions() to  substitute for SetOptions()
      * to set text content; color; 
      * @param options 
      */

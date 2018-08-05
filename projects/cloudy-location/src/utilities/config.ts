@@ -22,15 +22,20 @@ export interface MapConifg {
         "road"?: boolean,
         "distance"?: boolean,
         "marks"?: boolean
+        "regions"?: boolean
     },
     "centerPoint"?: Array<number>
     "centerSrs"?: string
     "srs"?: string
     "zoom"?: number
     "zoomrange"?: [number, number]
+    "zoomfactor"?: number,
+    "maxResolution"?: number,
+    "minResolution"?: number,
     "geoServerGroup"?: string
     "frontEndEpsg"?: string
     "infoUrl"?: string
+    "GWC"?: boolean
 }
 export interface TableConfig {
     columns: Array<TableItem>

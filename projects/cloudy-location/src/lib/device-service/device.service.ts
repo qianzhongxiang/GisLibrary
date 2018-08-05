@@ -6,7 +6,7 @@ import { HighlightDecorator } from './../../graphic/highlightDecorator';
 import { Messaging } from './../../utilities/mqttws31';
 import { BaseGraphic } from './../../graphic/BaseGraphic';
 import { Injectable } from '@angular/core';
-import { GraphicOutInfo, GetGraphicFactory, Graphic, IStyleOptions, IGraphic } from "./../../graphic/Graphic";
+import { GraphicOutInfo, GetGraphicFactory, Graphic, IStyleOptions, IGraphic } from "./../../graphic/graphic";
 import { GetConfigManager, IObseverable, ObserverableWMediator, LogHelper, WebSocketor, Composit } from 'vincijs';
 import VertorSource from 'ol/source/Vector'
 import VertorLayer from 'ol/layer/Vector'
@@ -40,8 +40,8 @@ export class DeviceService extends ObserverableWMediator {
   private VectorSource: ol.source.Vector
   private Layer: ol.layer.Vector
   public Events = {
-    WSOpened: "WSOpened", WSClosed: "WSClosed", TweenStart: "TweenStart"
-    , DeviceUpdate: "DeviceUpdate", MsgChange: "MsgChange", StyleOptionCreated: "StyleOptionCreated"
+    WSOpened: "WSOpened", WSClosed: "WSClosed"
+    , DeviceUpdate: "DeviceUpdate", MsgChange: "MsgChange", StyleCreating: "StyleCreating"
   }
   private HighlightedId: string
   private autoReconnectInterval: number = 5000
@@ -64,11 +64,13 @@ export class DeviceService extends ObserverableWMediator {
           , direction = c.Direction
         if (this.Filter && !this.Filter(c)) return [];
         let graphic = GetGraphicFactory().GetComponent(type);
+        this.SetState(this.Events.StyleCreating, c)
         let decorator = GetGraphicFactory().GetComponent('decorator') as Decorator
         decorator.RemoveAll();
         decorator.Add(graphic);
+        //TODO use AssignOptions() to  substitute for SetOptions()
         decorator.SetOptions({
-          color: f.get('mainColor'), content: f.get('name') || id
+          color: c.Color, content: c.Title || id.toString()
           , rotation: direction
         })
         if (c && c.Repairing) {
@@ -338,9 +340,10 @@ export class DeviceService extends ObserverableWMediator {
       let profile: GraphicOutInfo, type: DeviceStatus
       let ps: [number, number] = [data.X, data.Y];
       // ps = ol_proj.transform(ps, GetProjByEPSG(0), 'EPSG:3857')// 'EPSG:4326'
-      ps = ol_proj.transform(ps, GetProjByEPSG(data.EPSG || 0), 'EPSG:3857')// 'EPSG:4326'
       if (posiConvertor)
         ps = posiConvertor(ps);
+      ps = ol_proj.transform(ps, GetProjByEPSG(data.EPSG || 0), 'EPSG:3857')// 'EPSG:4326'
+
       let feature: ol.Feature
       if (!this.Coms[data.UniqueId]) {
         profile = {
@@ -370,10 +373,10 @@ export class DeviceService extends ObserverableWMediator {
       profile.Direction = data.Direction;
       callback(profile, type, data);
       this.SetState(this.Events.DeviceUpdate, { data: profile, type: type })
-      if (type == DeviceStatus.New || type == DeviceStatus.NewOffline) {
-        feature.setProperties({ name: profile.Title })
-        feature.setProperties({ mainColor: profile.Color })
-      }
+      // if (type == DeviceStatus.New || type == DeviceStatus.NewOffline) {
+      //   feature.setProperties({ name: profile.Title })
+      //   feature.setProperties({ mainColor: profile.Color })
+      // }
     }
   }
   //#endregion

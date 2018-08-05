@@ -2,7 +2,8 @@ import { LogHelper, Extend } from 'vincijs';
 import ol_layer_image from 'ol/layer/Image';
 import ol_source_imageWMS from 'ol/source/ImageWMS'
 import ol_proj from 'ol/proj'
-export default (options: { hostName: string, groupName: string }): ol.layer.Image => {
+import { LayerOptions } from './LayerOptions';
+export default (options: LayerOptions): ol.layer.Image => {
     options = Extend(options, { tiled: true })
     return new ol_layer_image({
         zIndex: 50,

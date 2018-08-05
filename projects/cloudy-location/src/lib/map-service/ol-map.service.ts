@@ -30,6 +30,10 @@ import ol_events_condition from 'ol/events/condition'
 import olpopup from 'ol-popup'
 import overlay from 'ol/Overlay';
 import { olx } from 'openlayers';
+import V_Regions_Layer from '../../layers/V_Regions_Layer';
+
+export type eventName = 'dblclick' | 'click' | 'pointermove'
+export type ViewEventName = 'change:resolution'
 @Injectable()
 export class OlMapService {
   private RouteL: ol.layer.Vector
@@ -56,7 +60,7 @@ export class OlMapService {
   private Map: ol.Map
   private CurrentPointByMouse: [number, number]
   public Init(Config: MapConifg) {
-    this.Config = Config;
+    this.Config = Object.assign({ scs: "EPSG:4326", frontEndEpsg: "EPSG:3857" }, Config)
   }
   public Show(data: { target: HTMLElement }) {
     this.EnvironmentConfig(data.target);
@@ -94,6 +98,42 @@ export class OlMapService {
     else // if (control instanceof ol.control.Control)
       this.Map.addControl(control);
   }
+
+  public ViewOn(eventName: ViewEventName | ViewEventName[], fn: (evt: ol.events.Event) => void) {
+    this.Map.getView().on(eventName, fn)
+  }
+  /**
+   * 订阅Map事件
+   * @param eventName 事件名称 'dblclick'|'click'|'pointermove' 后续添加其余事件
+   * @param fn 
+   * @param indicateFeature 
+   */
+  public MapOn(eventName: eventName | eventName[], fn: (evt: ol.events.Event, pixel: [number, number], feature?: ol.Feature) => void, indicateFeature: boolean = false) {
+    this.Map.on(eventName, (evt) => {
+      let pixel: [number, number], feature: ol.Feature
+      switch (evt.type) {
+        case 'pointermove':
+          pixel = this.Map.getEventPixel(evt["originalEvent"])
+          break;
+        case 'click':
+          pixel = evt["pixel"]
+          break;
+        case 'dblclick':
+          pixel = evt["pixel"]
+          break;
+        default:
+          break;
+      }
+
+      if (indicateFeature) {
+        feature = this.Map.forEachFeatureAtPixel(pixel, function (feature) {
+          return feature;
+        }) as ol.Feature;
+      }
+      fn(evt, pixel, feature);
+    });
+
+  }
   /**
    * 初始化地图
    * @param element 
@@ -105,7 +145,11 @@ export class OlMapService {
     control.on('change', (e: ol.events.Event) => {
       // console.log(e);
     });
-    let vo: olx.ViewOptions = { center: ol_proj.transform(this.Config.centerPoint, this.Config.centerSrs, 'EPSG:3857'), zoom: this.Config.zoom }
+    let vo: olx.ViewOptions =// { zoom: 4, center: [0, 0] }
+      {
+        center: ol_proj.transform(this.Config.centerPoint as [number, number], this.Config.centerSrs, this.Config.frontEndEpsg), zoom: this.Config.zoom,
+        zoomFactor: this.Config.zoomfactor, minResolution: this.Config.minResolution, maxResolution: this.Config.maxResolution
+      }
     if (this.Config.zoomrange) {
       vo.minZoom = this.Config.zoomrange[0];
       vo.maxZoom = this.Config.zoomrange[1];
@@ -117,7 +161,8 @@ export class OlMapService {
     });
 
     if (this.Config.layers.OMS) this.Map.addLayer(new ol_layer_Tile({ source: new ol_source_OSM() }));
-    if (this.Config.layers.bg) this.Map.addLayer(R_BG_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
+    if (this.Config.layers.bg) this.Map.addLayer(R_BG_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup, GWC: this.Config.GWC, dpi: 300 }));
+    if (this.Config.layers.regions) this.Map.addLayer(V_Regions_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
     if (this.Config.layers.road) this.Map.addLayer(V_Roads_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
     if (this.Config.layers.distance) this.Map.addLayer(V_Distance_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
     if (this.Config.layers.marks) this.Map.addLayer(V_Marks_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
@@ -139,10 +184,23 @@ export class OlMapService {
     });
     this.Map.addLayer(this.RangeL);
 
-    // this.Map.on('postcompose',()=>{
-    //     //TWEEN.update();
-    // });
   }
+  //region ZOOM
+  /**
+   * 
+   */
+  public get Zoom(): number {
+    return this.Map.getView().getZoom();
+  }
+  public set Zoom(value: number) {
+    this.Map.getView().setZoom(value);
+  }
+  //endregion
+  /**
+   * 
+   * @param callback 
+   * @param layer 
+   */
   public AddPopup(callback: (feature: ol.Feature) => string, layer: ol.layer.Vector) {
     let popup = new olpopup();
     this.Map.addOverlay(popup);
@@ -160,8 +218,11 @@ export class OlMapService {
     //   popup.show(e["coordinate"], "popup");
     // });
   }
-
-  public DrawRoute(route: string | Array<{ X: number, Y: number }> | ol.Feature, epsg: string = "EPSG:4326"): ol.Feature {
+  public DrawRoute(route: string | Array<{ X: number, Y: number }> | ol.Feature, styleOptions?: { width?: number, color?: string }): ol.Feature {
+    if (styleOptions) {
+      styleOptions = Object.assign({ width: 6, color: "#04cf87" }, styleOptions)
+      this.RouteL.setStyle(() => [new ol_style({ stroke: new ol_stroke({ width: styleOptions.width, color: styleOptions.color }) })])
+    }
     if (route instanceof ol_feature) {
       this.RouteL.getSource().addFeature(route);
       return route;
@@ -173,7 +234,7 @@ export class OlMapService {
     if (points) {
       let pointArray: Array<[number, number]> = [];
       points.forEach(p => {
-        pointArray.push(ol_proj.transform([p.X, p.Y], epsg, "EPSG:3857"));
+        pointArray.push(ol_proj.transform([p.X, p.Y], this.Config.srs, this.Config.frontEndEpsg));
       });
       let feature = new ol_feature(new ol_lineString(pointArray))
       this.RouteL.getSource().addFeature(feature);
@@ -185,7 +246,7 @@ export class OlMapService {
    * @param ps 
    * @param epsg 
    */
-  public DrawRange(ps: Array<{ X: number, Y: number }> | ol.Feature, epsg: string = "EPSG:4326"): ol.Feature {
+  public DrawRange(ps: Array<{ X: number, Y: number }> | ol.Feature): ol.Feature {
     if (ps instanceof ol_feature) {
       this.RangeL.getSource().addFeature(ps);
       return ps;
@@ -193,7 +254,7 @@ export class OlMapService {
     if (ps) {
       let source = this.RangeL.getSource();
       let a: Array<[number, number]> = [];
-      ps.forEach(p => a.push(ol_proj.transform([p.X, p.Y], epsg, "EPSG:3857")))
+      ps.forEach(p => a.push(ol_proj.transform([p.X, p.Y], this.Config.srs, this.Config.frontEndEpsg)))
       let feature = new ol_feature(new ol_polygon([a]))
       source.addFeature(feature);
       return feature;
@@ -216,6 +277,8 @@ export class OlMapService {
    * @param point 
    */
   public Focus(point: [number, number]) {
+    if (this.Config.srs)
+      point = ol_proj.transform(point, this.Config.srs, this.Config.frontEndEpsg)
     this.Map.getView().setCenter(point);
   }
 
@@ -394,7 +457,7 @@ export class OlMapService {
   public CreateFeature(type: "LineString" | "Circle" | "Polygon", points: [number, number][]): ol.Feature {
     let geom: ol.geom.Geometry
     //epsg transform
-    points = points.map(p => ol_proj.transform(p, this.Config.srs, this.Config.frontEndEpsg || "EPSG:3857"))
+    points = points.map(p => ol_proj.transform(p, this.Config.srs, this.Config.frontEndEpsg))
     switch (type.toLowerCase()) {
       case "linestring":
         geom = new ol_lineString(points)

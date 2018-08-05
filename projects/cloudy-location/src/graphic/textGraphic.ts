@@ -5,7 +5,8 @@ import { Materials } from "./materials";
 export class TextGraphic extends Graphic implements IGraphic {
     public constructor() {
         super();
-        this.Options.color = "black";
+        this.Options.color = "white";
+        this.Options.strokeColor = "black";
         this.Options.offsetY = -16;
     }
 

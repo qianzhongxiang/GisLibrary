@@ -7,10 +7,12 @@ export class AssetService {
   private Categories: Array<{ Title: string, Code: string }>
   private Assets: Array<AssetInfo>
   private Url: string
+  private Sort: boolean
   constructor() {
   }
-  public Init(Url: string) {
+  public Init(Url: string, sort: boolean = true) {
     this.Url = Url;
+    this.Sort = sort;
     this.GetInfoRemote();
   }
   /**get all online assets */
@@ -30,12 +32,14 @@ export class AssetService {
           this.Assets = d;
         else this.Assets = d.Data;
         this.Assets.forEach(i => { if (i.Uid) i.Id_Type = `${i.Uid.toLowerCase()}_${i.Type.toLowerCase()}` })
-        this.Assets = this.Assets.sort((a, b) => {
-          let at = a.Title.toLowerCase(), bt = b.Title.toLowerCase();
-          if (at < bt) return -1;
-          if (at > bt) return 1;
-          return 0;
-        })
+        if (this.Sort) {
+          this.Assets = this.Assets.sort((a, b) => {
+            let at = a.Title.toLowerCase(), bt = b.Title.toLowerCase();
+            if (at < bt) return -1;
+            if (at > bt) return 1;
+            return 0;
+          })
+        }
       }
     });
   }

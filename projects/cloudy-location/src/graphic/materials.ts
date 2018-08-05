@@ -28,6 +28,8 @@ export abstract class Materials {
         return [res];
     }
     public static GetCircle(options: IStyleOptions, radius: number = 8): ol.style.Style[] {
+        // implement scale
+        if (options.scale) radius = radius * options.scale
         let img = this.GetCircleImage(options, radius)
         let res = new Style({
             image: img,
@@ -99,7 +101,8 @@ export abstract class Materials {
                 text: options.font,
                 fill: new Fill({ color: options.color }),
                 rotation: options.rotation,
-                stroke: new Stroke({ color: options.strokeColor, width: options.strokeWidth })
+                stroke: new Stroke({ color: options.strokeColor, width: options.strokeWidth }),
+                scale: options.scale
             }),
             zIndex: options.zIndex
         });
@@ -107,6 +110,7 @@ export abstract class Materials {
         return [res];
     }
     public static GetText(options?: IStyleOptions): ol.style.Style[] {
+        options = Object.assign({ font: "400 .8rem San-serif" }, options)
         let res = new Style({
             text: new Text({
                 offsetY: options.offsetY,
@@ -114,7 +118,8 @@ export abstract class Materials {
                 fill: new Fill({ color: options.color }),
                 stroke: new Stroke({ color: options.strokeColor, width: options.strokeWidth }),
                 font: options.font,
-                text: options.content
+                text: options.content,
+                scale: options.scale
             }),
             zIndex: options.zIndex
         })

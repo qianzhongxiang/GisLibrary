@@ -23,6 +23,7 @@ export interface IStyleOptions {
 export interface IGraphic extends IComposit {
     Style(): ol.style.Style[]
     GetGeom(position: [number, number], type?: string): ol.Feature
+    AssignOption(options: IStyleOptions): IStyleOptions
 }
 
 export abstract class Graphic extends Composit implements IGraphic {
@@ -44,8 +45,9 @@ export abstract class Graphic extends Composit implements IGraphic {
     public GetGeom(position: [number, number], type?: string): ol.Feature {
         return Geometries.GetPoint(position, type);
     }
-    protected AssignOption(options?: IStyleOptions): IStyleOptions {
-        return Object.assign({}, this.Options, options)
+
+    public AssignOption(options: IStyleOptions): IStyleOptions {
+        return Object.assign(this.Options, options)
     }
     public Style(): ol.style.Style[] {
         if (!this.Children || this.Children.length <= 0) return [];
@@ -66,11 +68,11 @@ export interface IGraphicFactory {
     SetComponent(type: typeof Composit, name?: string): void
 }
 class GraphicFactory implements IGraphicFactory {
-    private Types = {}
+    private Types: { [key: string]: new () => Graphic } = {}
     private Pool = {}
     SetComponent(type: typeof Composit, name?: string): void {
         name = name || type.name.substr(0, name.length - 7);
-        this.Types[name.toLowerCase()] = type; // <ie9 will dosen't work
+        this.Types[name.toLowerCase()] = type as any; // <ie9 will dosen't work
         // LogHelper.Log(name)
         // console.log(this.Types)
     }

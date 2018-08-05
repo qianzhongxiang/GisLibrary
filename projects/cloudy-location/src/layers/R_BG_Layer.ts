@@ -2,19 +2,33 @@ import { Extend } from 'vincijs';
 import ol_layer_Tile from 'ol/layer/tile';
 import ol_source_tileWMS from 'ol/source/TileWMS'
 import ol_proj from 'ol/proj'
-export default (options: { tiled?: boolean, hostName: string, groupName: string }): ol.layer.Tile => {
+import { RasterLayerOptions } from './LayerOptions';
+export default (options: RasterLayerOptions): ol.layer.Tile => {
     options = Extend(options, { tiled: true })
+    let p = {
+        'FORMAT': 'image/jpeg',
+        'VERSION': '1.1.1',
+        tiled: options.tiled,
+        STYLES: '',
+        LAYERS: `${options.groupName}:Bg`,
+        CRS: 'EPSG:3857',
+        SRS: 'EPSG:3857',
+        TRANSPARENT: false
+    }
+    // if (options.dpi) {
+    //     p["format_options"] = `dpi:${options.dpi}`
+    //     p["WIDTH"] = 330
+    //     p["HEIGHT"] = 330
+    // }
+
     return new ol_layer_Tile({
         zIndex: 10,
         source: new ol_source_tileWMS({
-            url: `${options.hostName}/wms`,
-            params: {
-                'FORMAT': 'image/png',
-                'VERSION': '1.1.1',
-                tiled: options.tiled,
-                STYLES: '',
-                LAYERS: `${options.groupName}:Bg`
-            }
+            url: `${options.hostName}${options.GWC ? '/gwc/service' : ''}/wms`,
+            params: p,
+            // serverType: 'geoserver',
+            // hidpi: true,
+            projection: 'EPSG:3857'
         })
     });
 }

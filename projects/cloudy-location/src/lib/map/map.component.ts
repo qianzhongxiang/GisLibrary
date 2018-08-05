@@ -10,7 +10,7 @@ import ZoomSlider from 'ol/control/ZoomSlider'
 import Zoom from 'ol/control/Zoom'
 @Component({
   selector: 'cl-map',
-  template: '<div #div class="mapContainer" style="height:100%;"></div>',
+  template: '<div #div class="mapContainer" ></div>',
   styleUrls: ['./map.component.css']
 })
 export class MapComponent implements OnInit, AfterViewInit {

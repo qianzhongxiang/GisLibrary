@@ -1,4 +1,4 @@
-import { IStyleOptions } from './Graphic';
+import { IStyleOptions } from './graphics';
 
 import Style from 'ol/style/Style'
 import Circle from 'ol/style/Circle'

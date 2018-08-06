@@ -159,9 +159,18 @@ export class OlMapService {
       target: element,
       view: new ol_View(vo)
     });
-
+    let layerOptions = {
+      hostName: hostName, groupName: this.Config.geoServerGroup,
+      maxResolution: this.Config.maxResolution, minResolution: this.Config.minResolution,
+      GWC: this.Config.GWC
+    }
     if (this.Config.layers.OMS) this.Map.addLayer(new ol_layer_Tile({ source: new ol_source_OSM() }));
-    if (this.Config.layers.bg) this.Map.addLayer(R_BG_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup, GWC: this.Config.GWC, dpi: 300 }));
+    if (this.Config.layers.bg) {
+      if (this.Config.layers.bg !== true)
+        Object.assign(layerOptions, this.Config.layers.bg)
+      this.Map.addLayer(R_BG_Layer(layerOptions));
+    }
+
     if (this.Config.layers.regions) this.Map.addLayer(V_Regions_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
     if (this.Config.layers.road) this.Map.addLayer(V_Roads_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
     if (this.Config.layers.distance) this.Map.addLayer(V_Distance_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));

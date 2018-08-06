@@ -1,4 +1,4 @@
-import { Graphic, IGraphic, IStyleOptions } from "./Graphic";
+import { Graphic, IGraphic, IStyleOptions } from "./graphics";
 import { Geometries } from "./geometries";
 import { Materials, StyleType, STYLETYPE } from "./materials";
 export const STYLENAME = "styleName"

@@ -64,34 +64,77 @@ export abstract class Graphic extends Composit implements IGraphic {
     }
 }
 export interface IGraphicFactory {
+    /**
+     * get coincident component, ":[prop]=value" does not be supply currently.
+     * @param name format:type.subtype:[prop]=value, subtype can be undefined but can not be ''
+     */
     GetComponent(name: string): IGraphic
-    SetComponent(type: typeof Composit, name?: string): void
+    /**
+     * get coincident component, ":[prop]=value" does not be supply currently.
+     * @param type 
+     * @param name format:type.subtype:[prop]=value, subtype can be undefined but can not be ''
+     */
+    SetComponent(type: typeof Composit, name: string): void
+    /**
+     * whether is it existent in defaults 
+     * @param name 
+     */
+    DefsContains(name: string): boolean
+    GetDef(name: string): IGraphic
+    SetDef(type: typeof Composit, name: string): void
 }
 class GraphicFactory implements IGraphicFactory {
-    private Types: { [key: string]: new () => Graphic } = {}
-    private Pool = {}
-    SetComponent(type: typeof Composit, name?: string): void {
-        name = name || type.name.substr(0, name.length - 7);
-        this.Types[name.toLowerCase()] = type as any; // <ie9 will dosen't work
-        // LogHelper.Log(name)
-        // console.log(this.Types)
+    // private Types: { [key: string]: new () => Graphic } = {}
+    private Tps: { [key: string]: ({ [key: string]: (new () => IGraphic) } | (new () => IGraphic)) } = {}
+    private Defs: { [key: string]: new () => IGraphic } = {}
+    private Pool: { [key: string]: IGraphic } = {}
+    private DefPool: { [key: string]: IGraphic } = {}
+    SetComponent(type: typeof Composit, name: string): void {
+        // name = name || type.name.substr(0, name.length - 7);
+        name = name.toLowerCase()
+        let array = name.split('.');
+        if (!this.Tps[array[0]]) this.Tps[array[0]] = {}
+        if (array[1]) {
+            this.Tps[array[0]][array[1]] = type as any
+        } else {
+            this.Tps[array[0]][''] = type as any
+        }
+        this.Pool[name] = undefined
     }
     /**
-     * gain conincident Component 
-     * @param name  such as "Map" not "MapGraphic"
+     * gain coincident Component , ":[prop]=value" does not be supply currently.
+     * @param name  format:type.subtype:[prop]=value, subtype can be undefined but can not be ''
      */
     GetComponent(name: string): IGraphic {
-        if (!name) name = "base";
+        if (!name)
+            return this.GetDef('base')
         name = name.toLowerCase();
-        // console.log(name)
-        // console.log(this.Types)
-        return this.Pool[name] || (this.Pool[name] = new (this.Types[name] || this.Types["base"])())
+        if (this.Pool[name])
+            return this.Pool[name]
+        let array = name.split(".").map(i => i.toLowerCase());
+        let type: new () => IGraphic
+        //!type ||(!type.subType&&!type.'') return basic graphic
+        if (!this.Tps[array[0]] || (!(type = this.Tps[array[0]][array[1]]) && !(type = this.Tps[array[0]][''])))
+            return this.GetDef('base')
+        return this.Pool[name] = new type()
+    }
+
+    DefsContains(name: string): boolean {
+        return !!this.Defs[name.toLowerCase()];
+    }
+    GetDef(name: string): IGraphic {
+        return this.DefPool[name] ? this.DefPool[name] : (this.DefPool[name] = new this.Defs[name]() as IGraphic);
+    }
+    SetDef(type: typeof Composit, name: string): void {
+        name = name.toLowerCase()
+        this.Defs[name] = type as any;
+        this.DefPool[name] = undefined
     }
 }
 
 export interface GraphicOutInfo {
     /**
-     * Id_type
+     * I d_type
      */
     UniqueKey?: string
     Location: { x: number, y: number }
@@ -102,7 +145,7 @@ export interface GraphicOutInfo {
     Parent: IGraphic
     Title?: string
     type: string
-    // Path?: Tracker
+    // Pa th?: Tracker
     PArray?: Array<{ x: number, y: number, dur: number, time: string }>
     AllPs?: Array<{ x: number, y: number, dur: number, time: string }>
     Duration?: number

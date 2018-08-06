@@ -6,7 +6,7 @@ import { HighlightDecorator } from './../../graphic/highlightDecorator';
 import { Messaging } from './../../utilities/mqttws31';
 import { BaseGraphic } from './../../graphic/BaseGraphic';
 import { Injectable } from '@angular/core';
-import { GraphicOutInfo, GetGraphicFactory, Graphic, IStyleOptions, IGraphic } from "./../../graphic/graphic";
+import { GraphicOutInfo, GetGraphicFactory, Graphic, IStyleOptions, IGraphic } from "./../../graphic/graphics";
 import { GetConfigManager, IObseverable, ObserverableWMediator, LogHelper, WebSocketor, Composit } from 'vincijs';
 import VertorSource from 'ol/source/Vector'
 import VertorLayer from 'ol/layer/Vector'
@@ -52,11 +52,11 @@ export class DeviceService extends ObserverableWMediator {
   private Offlines: Array<{ id: string, type: string }>
   constructor() {
     super();
-    GetGraphicFactory().SetComponent(point, 'base');
-    GetGraphicFactory().SetComponent(HighlightDecorator, 'highlight');
-    GetGraphicFactory().SetComponent(OfflineDecorator, 'offline');
-    GetGraphicFactory().SetComponent(Decorator, 'decorator');
-    GetGraphicFactory().SetComponent(RepairingDecorator, 'repairing');
+    GetGraphicFactory().SetDef(point, 'base');
+    GetGraphicFactory().SetDef(HighlightDecorator, 'highlight');
+    GetGraphicFactory().SetDef(OfflineDecorator, 'offline');
+    GetGraphicFactory().SetDef(Decorator, 'decorator');
+    GetGraphicFactory().SetDef(RepairingDecorator, 'repairing');
     this.VectorSource = new VertorSource();
     this.Layer = new VertorLayer({
       source: this.VectorSource, style: (feature) => {

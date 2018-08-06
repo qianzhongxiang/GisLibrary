@@ -2,7 +2,7 @@ import { OfflineAssetComponent } from './../offline-asset/offline-asset.componen
 import { AssetService } from './../asset-service/asset.service';
 import { DeviceStatus } from './../../utilities/enum';
 import { ToolbarConfig, ICate, AssetInfo, OffLines } from './../../utilities/entities';
-import { GraphicOutInfo } from './../../graphic/Graphic';
+import { GraphicOutInfo } from './../../graphic/graphics';
 import { DeviceService } from './../device-service/device.service';
 import { Component, OnInit, TemplateRef, ElementRef, ViewChild, Inject, Input, AfterViewInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';

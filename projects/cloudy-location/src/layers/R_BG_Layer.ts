@@ -15,11 +15,6 @@ export default (options: RasterLayerOptions): ol.layer.Tile => {
         SRS: 'EPSG:3857',
         TRANSPARENT: false
     }
-    // if (options.dpi) {
-    //     p["format_options"] = `dpi:${options.dpi}`
-    //     p["WIDTH"] = 330
-    //     p["HEIGHT"] = 330
-    // }
 
     return new ol_layer_Tile({
         zIndex: 10,

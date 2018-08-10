@@ -1,4 +1,4 @@
-import { MapConifg } from './../../utilities/config';
+import { MapConifg, AssignMapConfig } from './../../utilities/config';
 import { LogHelper, Ajax } from 'vincijs';
 import { Injectable } from '@angular/core';
 import { ContextMenu_Super } from './../../utilities/ContextMenu_Super';
@@ -60,7 +60,7 @@ export class OlMapService {
   private Map: ol.Map
   private CurrentPointByMouse: [number, number]
   public Init(Config: MapConifg) {
-    this.Config = Object.assign({ scs: "EPSG:4326", frontEndEpsg: "EPSG:3857" }, Config)
+    this.Config = AssignMapConfig(Config)
   }
   public Show(data: { target: HTMLElement }) {
     this.EnvironmentConfig(data.target);
@@ -148,7 +148,8 @@ export class OlMapService {
     let vo: olx.ViewOptions =// { zoom: 4, center: [0, 0] }
       {
         center: ol_proj.transform(this.Config.centerPoint as [number, number], this.Config.centerSrs, this.Config.frontEndEpsg), zoom: this.Config.zoom,
-        zoomFactor: this.Config.zoomfactor, minResolution: this.Config.minResolution, maxResolution: this.Config.maxResolution
+        zoomFactor: this.Config.zoomfactor,// minResolution: this.Config.minResolution, maxResolution: this.Config.maxResolution,
+        resolutions: this.Config.resolutions
       }
     if (this.Config.zoomrange) {
       vo.minZoom = this.Config.zoomrange[0];
@@ -162,20 +163,21 @@ export class OlMapService {
     let layerOptions = {
       hostName: hostName, groupName: this.Config.geoServerGroup,
       maxResolution: this.Config.maxResolution, minResolution: this.Config.minResolution,
-      GWC: this.Config.GWC
+      GWC: this.Config.GWC, resolutions: this.Config.resolutions, extent: this.Config.extent
     }
-    if (this.Config.layers.OMS) this.Map.addLayer(new ol_layer_Tile({ source: new ol_source_OSM() }));
-    if (this.Config.layers.bg) {
-      if (this.Config.layers.bg !== true)
-        Object.assign(layerOptions, this.Config.layers.bg)
-      this.Map.addLayer(R_BG_Layer(layerOptions));
+    if (!(this.Config.layers instanceof Array)) {
+      if (this.Config.layers.OMS) this.Map.addLayer(new ol_layer_Tile({ source: new ol_source_OSM() }));
+      if (this.Config.layers.bg) {
+        if (this.Config.layers.bg !== true)
+          Object.assign(layerOptions, this.Config.layers.bg)
+        this.Map.addLayer(R_BG_Layer(layerOptions));
+      }
+
+      if (this.Config.layers.regions) this.Map.addLayer(V_Regions_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
+      if (this.Config.layers.road) this.Map.addLayer(V_Roads_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
+      if (this.Config.layers.distance) this.Map.addLayer(V_Distance_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
+      if (this.Config.layers.marks) this.Map.addLayer(V_Marks_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
     }
-
-    if (this.Config.layers.regions) this.Map.addLayer(V_Regions_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
-    if (this.Config.layers.road) this.Map.addLayer(V_Roads_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
-    if (this.Config.layers.distance) this.Map.addLayer(V_Distance_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
-    if (this.Config.layers.marks) this.Map.addLayer(V_Marks_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
-
 
     let style = new ol_style({ stroke: new ol_stroke({ width: 6, color: "#04cf87" }) })
     this.RouteL = new ol_layer_vector({

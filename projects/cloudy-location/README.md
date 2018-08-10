@@ -4,6 +4,15 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 ## Migration
 ### 0.0.2=>0.0.3:
 
+## Options
+### Custom Resolutions
+``` ts
+//在geoserver中 设定自定gridset
+//以下两个选项是必须的
+resolutions:number[]
+extent:[number,number,number,number]//可以从geoserver中获取
+```
+
 ## Style Components
 ### `graphic --base class`
 properties：

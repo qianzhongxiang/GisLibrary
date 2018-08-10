@@ -14,7 +14,7 @@ import ol_proj from 'ol/proj'
 import { GetProjByEPSG } from './../../utilities/olProjConvert';
 import { DataItem, MsgEntity } from './../../utilities/entities';
 import * as mqtt from 'mqtt'
-import { MapConifg } from './../../utilities/config';
+import { MapConifg, AssignMapConfig } from './../../utilities/config';
 import * as jQuery from 'jquery'
 import { DeviceStatus } from '../../utilities/enum';
 // import ol_style = require('ol/style/Style')
@@ -65,7 +65,7 @@ export class DeviceService extends ObserverableWMediator {
         if (this.Filter && !this.Filter(c)) return [];
         let graphic = GetGraphicFactory().GetComponent(type);
         this.SetState(this.Events.StyleCreating, c)
-        let decorator = GetGraphicFactory().GetComponent('decorator') as Decorator
+        let decorator = GetGraphicFactory().GetDef('decorator') as Decorator
         decorator.RemoveAll();
         decorator.Add(graphic);
         //TODO use AssignOptions() to  substitute for SetOptions()
@@ -92,16 +92,19 @@ export class DeviceService extends ObserverableWMediator {
    * 为graphy提供装饰器生成
    */
   private GenerateDecorator(subItem: IGraphic, item: string): Decorator {
-    let container = GetGraphicFactory().GetComponent(item) as Decorator;
+    let container = GetGraphicFactory().GetDef(item) as Decorator;
     container.RemoveAll();
     container.Add(subItem)
     return container;
   }
   public Init(Config: MapConifg) {
-    this.Config = Config
+    this.Config = AssignMapConfig(Config)
   }
   public AddGraphic(type: typeof Composit, name: string) {
-    GetGraphicFactory().SetComponent(type, name);
+    if (GetGraphicFactory().DefsContains(name))
+      GetGraphicFactory().SetDef(type, name)
+    else
+      GetGraphicFactory().SetComponent(type, name);
   }
   public GetLayer(): ol.layer.Vector {
     return this.Layer;
@@ -342,7 +345,7 @@ export class DeviceService extends ObserverableWMediator {
       // ps = ol_proj.transform(ps, GetProjByEPSG(0), 'EPSG:3857')// 'EPSG:4326'
       if (posiConvertor)
         ps = posiConvertor(ps);
-      ps = ol_proj.transform(ps, GetProjByEPSG(data.EPSG || 0), 'EPSG:3857')// 'EPSG:4326'
+      ps = ol_proj.transform(ps, data.EPSG !== undefined ? GetProjByEPSG(data.EPSG) : this.Config.srs, this.Config.frontEndEpsg)
 
       let feature: ol.Feature
       if (!this.Coms[data.UniqueId]) {

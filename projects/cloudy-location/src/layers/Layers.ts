@@ -4,6 +4,8 @@ export interface LayerOptions {
     GWC?: boolean
     maxResolution?: number
     minResolution?: number
+    resolutions?: Array<number>
+    extent?: [number, number, number, number]
 }
 
 export interface RasterLayerOptions extends LayerOptions {

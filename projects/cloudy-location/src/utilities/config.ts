@@ -8,6 +8,17 @@ export interface LocationConfig {
     "mqttTopic"?: string,
     "wsType"?: string,
 }
+export interface LayerGroup {
+    "OMS"?: boolean,
+    "bg"?: boolean,
+    "road"?: boolean,
+    "distance"?: boolean,
+    "marks"?: boolean
+    "regions"?: boolean
+}
+export let AssignMapConfig = (config: MapConifg) => {
+    return Object.assign({ srs: "EPSG:4326", frontEndEpsg: "EPSG:3857", geoServerGroup: "LS", centerSrs: "EPSG:4326" }, config)
+}
 export interface MapConifg {
     "geoServerUrl"?: string
     "mqttUser"?: string
@@ -16,14 +27,7 @@ export interface MapConifg {
     "locationConfig"?: LocationConfig
     "msgConfig"?: MsgConfig
     "webService"?: string
-    "layers"?: {
-        "OMS"?: boolean,
-        "bg"?: boolean,
-        "road"?: boolean,
-        "distance"?: boolean,
-        "marks"?: boolean
-        "regions"?: boolean
-    },
+    "layers"?: LayerGroup | LayerGroup[],
     "centerPoint"?: Array<number>
     "centerSrs"?: string
     "srs"?: string
@@ -32,6 +36,8 @@ export interface MapConifg {
     "zoomfactor"?: number,
     "maxResolution"?: number,
     "minResolution"?: number,
+    "resolutions"?: number[]
+    "extent"?: [number, number, number, number]
     "geoServerGroup"?: string
     "frontEndEpsg"?: string
     "infoUrl"?: string

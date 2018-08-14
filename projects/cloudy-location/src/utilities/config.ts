@@ -9,16 +9,15 @@ export interface LocationConfig {
     "wsType"?: string,
 }
 export interface LayerGroup {
-    "OMS"?: boolean,
-    "bg"?: boolean,
-    "road"?: boolean,
-    "distance"?: boolean,
-    "marks"?: boolean
-    "regions"?: boolean
+    OMS?: boolean,
+    bg?: boolean,
+    road?: boolean,
+    distance?: boolean,
+    marks?: boolean
+    regions?: boolean
+    index?: number
 }
-export let AssignMapConfig = (config: MapConifg) => {
-    return Object.assign({ srs: "EPSG:4326", frontEndEpsg: "EPSG:3857", geoServerGroup: "LS", centerSrs: "EPSG:4326" }, config)
-}
+
 export interface MapConifg {
     "geoServerUrl"?: string
     "mqttUser"?: string
@@ -42,6 +41,7 @@ export interface MapConifg {
     "frontEndEpsg"?: string
     "infoUrl"?: string
     "GWC"?: boolean
+    floorSwitcher?: boolean
 }
 export interface TableConfig {
     columns: Array<TableItem>

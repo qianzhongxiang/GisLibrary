@@ -1,3 +1,5 @@
+import { FloorService } from './../floor/floor.service';
+import { ConfigurationService } from './../configuration.service';
 import { RepairingDecorator } from './../../graphic/repiringDecorator';
 import { TextGraphic } from './../../graphic/textGraphic';
 import { Decorator } from './../../graphic/decorator';
@@ -14,7 +16,7 @@ import ol_proj from 'ol/proj'
 import { GetProjByEPSG } from './../../utilities/olProjConvert';
 import { DataItem, MsgEntity } from './../../utilities/entities';
 import * as mqtt from 'mqtt'
-import { MapConifg, AssignMapConfig } from './../../utilities/config';
+import { MapConifg } from './../../utilities/config';
 import * as jQuery from 'jquery'
 import { DeviceStatus } from '../../utilities/enum';
 // import ol_style = require('ol/style/Style')
@@ -48,9 +50,8 @@ export class DeviceService extends ObserverableWMediator {
   private duration: number = 5000
   public durTimes: number = 1
   private Filter: (graphic: GraphicOutInfo) => boolean
-  private Config: MapConifg
   private Offlines: Array<{ id: string, type: string }>
-  constructor() {
+  constructor(private ConfigurationService: ConfigurationService, private FloorService: FloorService) {
     super();
     GetGraphicFactory().SetDef(point, 'base');
     GetGraphicFactory().SetDef(HighlightDecorator, 'highlight');
@@ -59,34 +60,37 @@ export class DeviceService extends ObserverableWMediator {
     GetGraphicFactory().SetDef(RepairingDecorator, 'repairing');
     this.VectorSource = new VertorSource();
     this.Layer = new VertorLayer({
-      source: this.VectorSource, style: (feature) => {
-        let f = (feature as ol.Feature), id = f.getId(), c = this.Coms[id], type = c.type
-          , direction = c.Direction
-        if (this.Filter && !this.Filter(c)) return [];
-        let graphic = GetGraphicFactory().GetComponent(type);
-        this.SetState(this.Events.StyleCreating, c)
-        let decorator = GetGraphicFactory().GetDef('decorator') as Decorator
-        decorator.RemoveAll();
-        decorator.Add(graphic);
-        //TODO use AssignOptions() to  substitute for SetOptions()
-        decorator.SetOptions({
-          color: c.Color, content: c.Title || id.toString()
-          , rotation: direction
-        })
-        if (c && c.Repairing) {
-          decorator = this.GenerateDecorator(decorator, 'repairing')
-        }
-        if (c && c.Offline) {
-          decorator = this.GenerateDecorator(decorator, 'offline')
-        }
-        if (this.HighlightedId && this.HighlightedId == id) {
-          decorator = this.GenerateDecorator(decorator, 'highlight')
-        }
-
-        return decorator.Style();
-      }
+      source: this.VectorSource, style: this.StyleFn.bind(this)
     });
     this.Layer.setZIndex(200);
+    //listening to floor changed
+    this.FloorService.Bind(this.FloorService.Events.Changed, this.SetFloor.bind(this))
+  }
+  private StyleFn(f: ol.Feature) {
+    let id = f.getId(), c = this.Coms[id]
+      , direction = c.Direction
+    if (this.Filter && !this.Filter(c)) return [];
+    let graphic = GetGraphicFactory().GetComponent(`${c.Type}.${c.SubType}`);
+    this.SetState(this.Events.StyleCreating, c)
+    let decorator = GetGraphicFactory().GetDef('decorator') as Decorator
+    decorator.RemoveAll();
+    decorator.Add(graphic);
+    //TODO use AssignOptions() to  substitute for SetOptions()
+    decorator.SetOptions({
+      color: c.Color, content: c.Title || id.toString()
+      , rotation: direction
+    })
+    if (c && c.Repairing) {
+      decorator = this.GenerateDecorator(decorator, 'repairing')
+    }
+    if (c && c.Offline) {
+      decorator = this.GenerateDecorator(decorator, 'offline')
+    }
+    if (this.HighlightedId && this.HighlightedId == id) {
+      decorator = this.GenerateDecorator(decorator, 'highlight')
+    }
+
+    return decorator.Style();
   }
   /**
    * 为graphy提供装饰器生成
@@ -97,9 +101,29 @@ export class DeviceService extends ObserverableWMediator {
     container.Add(subItem)
     return container;
   }
-  public Init(Config: MapConifg) {
-    this.Config = AssignMapConfig(Config)
+  public SetFloor() {
+    //remove all feature
+    this.Layer.getSource().clear();
+    for (let n in this.Coms) {
+      this.AddFeature(this.Coms[n])
+    }
   }
+
+  private AddFeature(info: GraphicOutInfo) {
+    if (info.Floor === undefined || info.Floor == this.FloorService.GetFloorNo()) {
+      let graphic = info.Graphic = GetGraphicFactory().GetComponent(`${info.Type}.${info.SubType}`)
+      let feature = graphic.GetGeom([info.Location.x, info.Location.y]);
+      feature.setId(info.Id);
+      feature.set("type", info.Type)
+      this.VectorSource.addFeature(feature);
+    }
+  }
+
+  /**
+   * outside api for add a kind of graphic 
+   * @param type a kind of graphic
+   * @param name name of graphic
+   */
   public AddGraphic(type: typeof Composit, name: string) {
     if (GetGraphicFactory().DefsContains(name))
       GetGraphicFactory().SetDef(type, name)
@@ -150,14 +174,7 @@ export class DeviceService extends ObserverableWMediator {
     //TODO 判断位置如果相同不进行任何操作;
     if (graphic = this.Coms[id]) {
       let feature = this.VectorSource.getFeatureById(graphic.Id);
-      (feature.getGeometry() as ol.geom.Point).setCoordinates([loc.x, loc.y])
-      // ******TWEEN****************
-      // if (!graphic.PArray) graphic.PArray = [];
-      // graphic.PArray.push({ x: loc.x, y: loc.y, dur: duration, time: graphic.Time as string });
-      // if (!that.LastTweens[graphic.Id]) {
-      //     // LogHelper.Log("tween launch")
-      //     that.LastTweens[graphic.Id] = this.Tween(graphic.Location, graphic).start();
-      // }
+      if (feature) (feature.getGeometry() as ol.geom.Point).setCoordinates([loc.x, loc.y])
     }
     else
       console.log("err: id:" + id + " 在Coms中不存在");
@@ -170,8 +187,9 @@ export class DeviceService extends ObserverableWMediator {
    */
   public DataProcess(callback: (gif: GraphicOutInfo, type: DeviceStatus) => void
     , posiConvertor?: (posi: [number, number]) => [number, number]): DeviceService {
-    let type = this.Config.locationConfig.wsType;
-    let url = this.Config.locationConfig.locationURI
+    let mapConfig = this.ConfigurationService.MapConfig;
+    let type = mapConfig.locationConfig.wsType;
+    let url = mapConfig.locationConfig.locationURI
     switch (type) {
       case "ws":
         if (this.socket) return this;
@@ -208,70 +226,11 @@ export class DeviceService extends ObserverableWMediator {
         })
         break;
       case "mqtt":
-        let t = this.Config.locationConfig.mqttTopic,
+        let t = mapConfig.locationConfig.mqttTopic,
           devMsg = 'devMsg'
-          , user = this.Config.mqttUser
-          , pd = this.Config.mqttPd
+          , user = mapConfig.mqttUser
+          , pd = mapConfig.mqttPd
           , client = mqtt.connect(url, { username: user, password: pd })
-
-        // let array = url.split(":")
-        // let mqClient = new Messaging.Client(url.replace(":" + array[2], ""), Number(array[2]), "locFrontEnd");
-        // mqClient.onConnectionLost = (responseObject) => {
-        //   if (responseObject.errorCode !== 0) {
-        //     console.log("onConnectionLost:" + responseObject.errorMessage);
-        //     mqClient.connect({
-        //       password: pd,
-        //       userName: user,
-        //       onSuccess: () => {
-        //         // Once a connection has been made, make a subscription and send a message.
-        //         console.log("onConnect");
-        //         mqClient.subscribe(t)
-        //         mqClient.subscribe(devMsg)
-        //       }
-        //     });
-        //   }
-        // };
-        // mqClient.onMessageArrived = (message) => {
-        //   console.log("onMessageArrived:" + message.payloadString);
-        //   let str = message.payloadString;
-        //   let topic = message.destinationName;
-        //   try {
-        //     let datas = JSON.parse(str);
-        //     switch (topic) {
-        //       case t:
-        //         LogHelper.Log(str);
-        //         this.Resolve([datas], callback, posiConvertor)
-        //         break;
-        //       case devMsg:
-        //         let array = datas as Array<MsgEntity>
-        //         array.forEach(i => {
-        //           let item = this.Coms[i.Uid];
-        //           if (item && !item.Offline) {
-        //             item.Offline = true;
-        //             callback(item, DeviceStatus.Offline)
-        //             this.SetState(this.Events.DeviceUpdate, { data: item, type: DeviceStatus.Offline })
-        //           }
-        //         })
-        //         this.VectorSource.refresh();
-        //         // this.SetState(this.Events.MsgChange, array)
-        //         break;
-        //     }
-        //   } catch (error) {
-        //     LogHelper.Error(error)
-        //   }
-        //   // mqClient.disconnect();
-        // };
-
-        // mqClient.connect({
-        //   password: pd,
-        //   userName: user,
-        //   onSuccess: () => {
-        //     // Once a connection has been made, make a subscription and send a message.
-        //     mqClient.subscribe(t)
-        //     mqClient.subscribe(devMsg)
-        //   }
-        // });
-
 
         client.on('connect', () => {
           client.subscribe(t)
@@ -315,7 +274,7 @@ export class DeviceService extends ObserverableWMediator {
    */
   public DevPositionInit(items: string, callback: (gif: GraphicOutInfo, type: DeviceStatus) => void
     , posiConvertor?: (posi: [number, number]) => [number, number]) {
-    let url = this.Config.webService + `/DeviceProfileGet?callback=?`
+    let url = this.ConfigurationService.MapConfig.webService + `/DeviceProfileGet?callback=?`
     this.Jsonp(url, { items: items }, (s) => {
       if (!s) return;
       let ds: Array<{ DevState: number, LocationItem: DataItem }> = JSON.parse(s);
@@ -339,26 +298,21 @@ export class DeviceService extends ObserverableWMediator {
     for (var i = 0; i < datas.length; i++) {
       let data: DataItem = datas[i], now = new Date();
       if (data.X == 0 && data.Y == 0) continue;
-      let graphic = GetGraphicFactory().GetComponent(data.Type);
       let profile: GraphicOutInfo, type: DeviceStatus
       let ps: [number, number] = [data.X, data.Y];
       // ps = ol_proj.transform(ps, GetProjByEPSG(0), 'EPSG:3857')// 'EPSG:4326'
       if (posiConvertor)
         ps = posiConvertor(ps);
-      ps = ol_proj.transform(ps, data.EPSG !== undefined ? GetProjByEPSG(data.EPSG) : this.Config.srs, this.Config.frontEndEpsg)
+      ps = ol_proj.transform(ps, data.EPSG !== undefined ? GetProjByEPSG(data.EPSG) : this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg)
 
       let feature: ol.Feature
       if (!this.Coms[data.UniqueId]) {
         profile = {
-          type: data.Type, Graphic: graphic, Id: data.UniqueId, Location: { x: ps[0], y: ps[1] }
+          Type: data.Type, Id: data.UniqueId, Location: { x: ps[0], y: ps[1] }
           , Parent: null
           , Title: data.Name
           , ReveiveTime: now
         }
-        feature = graphic.GetGeom(ps);
-        feature.setId(profile.Id);
-        feature.set("type", profile.type)
-        this.VectorSource.addFeature(feature);
         this.Coms[data.UniqueId] = profile;
         type = data.Offline ? DeviceStatus.NewOffline : DeviceStatus.New;
       } else {
@@ -375,6 +329,10 @@ export class DeviceService extends ObserverableWMediator {
       profile.Offline = data.Offline;
       profile.Direction = data.Direction;
       callback(profile, type, data);
+      if (type == DeviceStatus.New || type == DeviceStatus.NewOffline)
+        //callback 会为profile.subType 赋值
+        this.AddFeature(profile);
+
       this.SetState(this.Events.DeviceUpdate, { data: profile, type: type })
       // if (type == DeviceStatus.New || type == DeviceStatus.NewOffline) {
       //   feature.setProperties({ name: profile.Title })

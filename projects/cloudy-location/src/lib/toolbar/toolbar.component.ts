@@ -28,19 +28,19 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     if (this.DeviceService) {
       this.DeviceService.Bind(this.DeviceService.Events.DeviceUpdate, (msg) => {
         var value: { data: GraphicOutInfo, type: DeviceStatus } = msg.Value
-        if (!this.AssetService || !this.AssetService.Get(value.data.Id, value.data.type)) return;
+        if (!this.AssetService || !this.AssetService.Get(value.data.Id, value.data.Type)) return;
         switch (value.type) {
           case DeviceStatus.New:
-            this.ChangeCount(value.data.Id, value.data.type, 1)
+            this.ChangeCount(value.data.Id, value.data.Type, 1)
             this.offline.count--;
             break;
           case DeviceStatus.Online:
-            this.ChangeCount(value.data.Id, value.data.type, 1)
+            this.ChangeCount(value.data.Id, value.data.Type, 1)
             this.offline.count--;
             break;
           case DeviceStatus.Offline:
             this.offline.count++;
-            this.ChangeCount(value.data.Id, value.data.type, -1);
+            this.ChangeCount(value.data.Id, value.data.Type, -1);
             break;
           case DeviceStatus.NewOffline:
             break;
@@ -130,7 +130,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
   FilterChanged() {
     this.DeviceService.SetShowItem((gif) => {
-      let i = this.AssetService.Get(gif.Id, gif.type)
+      let i = this.AssetService.Get(gif.Id, gif.Type)
       if (!i) return false;
       let catedVisable: boolean = gif.Offline ? this.offline.visable : true;
       let c = i.Category.toLowerCase();
@@ -139,7 +139,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       //the offlines never verify the major types
       if (gif.Offline)
         return catedVisable;
-      let t = gif.type.toLowerCase();
+      let t = gif.Type.toLowerCase();
       let cate = this.Cates.find(cate => cate.code == t);
       let visable = (cate ? cate.visable : true) && catedVisable
       return visable;

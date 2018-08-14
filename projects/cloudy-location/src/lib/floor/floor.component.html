@@ -1,3 +1,7 @@
 <ul>
-  <li *ngFor="let f of floors" (click)="click(f)">{{f.index}}</li>
+  <li *ngFor="let f of FloorService.Floors">
+    <button (click)="Click(f)" type="button" class="btn">
+      {{f.index}}
+    </button>
+  </li>
 </ul>

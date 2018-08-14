@@ -1,6 +1,8 @@
-import { MapConifg, AssignMapConfig } from './../../utilities/config';
+import { FloorService } from './../floor/floor.service';
+import { ConfigurationService } from './../configuration.service';
+import { MapConifg } from './../../utilities/config';
 import { LogHelper, Ajax } from 'vincijs';
-import { Injectable } from '@angular/core';
+import { Injectable, Optional } from '@angular/core';
 import { ContextMenu_Super } from './../../utilities/ContextMenu_Super';
 import olFormatGeoJson from 'ol/format/GeoJson';
 import ol_Map from 'ol/map';
@@ -39,7 +41,6 @@ export class OlMapService {
   private RouteL: ol.layer.Vector
   private RangeL: ol.layer.Vector
   private DrawL: ol.layer.Vector
-  private Config: MapConifg
   private DefaultStyle = new ol_style({ stroke: new ol_stroke({ width: 2, color: '#8ccf1c' }) })
   /**
    * 获取矢量图层
@@ -55,15 +56,35 @@ export class OlMapService {
         return this.DrawL;
     }
   }
-  constructor() { }
+  constructor(private ConfigurationService: ConfigurationService, private FloorService: FloorService) {
+    // init options of floor service
+    let mapConfig = this.ConfigurationService.MapConfig
+    this.FloorService.SetOptions({
+      layerOptions: {
+        hostName: mapConfig.geoServerUrl
+        , groupName: mapConfig.geoServerGroup, GWC: mapConfig.GWC, maxResolution: mapConfig.maxResolution
+        , minResolution: mapConfig.minResolution, resolutions: mapConfig.resolutions, extent: mapConfig.extent
+      }
+      , floors: (mapConfig.layers instanceof Array ? mapConfig.layers : [mapConfig.layers])
+    })
+    //listening to changing of floor, and call setFloor
+    this.FloorService.Bind(this.FloorService.Events.Changed, msg => this.SetFloor())
+  }
 
   private Map: ol.Map
   private CurrentPointByMouse: [number, number]
-  public Init(Config: MapConifg) {
-    this.Config = AssignMapConfig(Config)
-  }
+
   public Show(data: { target: HTMLElement }) {
     this.EnvironmentConfig(data.target);
+  }
+  /**
+   * set floor info
+   */
+  public SetFloor() {
+    //remove all layer even though drawing layer
+    this.Map.getLayers().forEach(l => this.Map.removeLayer(l))
+    //add layers from new floor
+    this.InitLayers();
   }
   /**
    * AddLayer
@@ -139,62 +160,48 @@ export class OlMapService {
    * @param element 
    */
   private EnvironmentConfig(element: HTMLElement) {
-    let hostName = this.Config.geoServerUrl;
-    // let hostName = GetConfigManager().GetConfig("geoServerUrl");
+    let mapConfig = this.ConfigurationService.MapConfig
     let control = new ol_PostionControl({ target: document.createElement("div"), projection: "EPSG:3857" });
     control.on('change', (e: ol.events.Event) => {
       // console.log(e);
     });
     let vo: olx.ViewOptions =// { zoom: 4, center: [0, 0] }
       {
-        center: ol_proj.transform(this.Config.centerPoint as [number, number], this.Config.centerSrs, this.Config.frontEndEpsg), zoom: this.Config.zoom,
-        zoomFactor: this.Config.zoomfactor,// minResolution: this.Config.minResolution, maxResolution: this.Config.maxResolution,
-        resolutions: this.Config.resolutions
+        center: ol_proj.transform(mapConfig.centerPoint as [number, number], mapConfig.centerSrs, mapConfig.frontEndEpsg), zoom: mapConfig.zoom,
+        zoomFactor: mapConfig.zoomfactor,// minResolution: mapConfig.minResolution, maxResolution: mapConfig.maxResolution,
+        resolutions: mapConfig.resolutions
       }
-    if (this.Config.zoomrange) {
-      vo.minZoom = this.Config.zoomrange[0];
-      vo.maxZoom = this.Config.zoomrange[1];
+    if (mapConfig.zoomrange) {
+      vo.minZoom = mapConfig.zoomrange[0];
+      vo.maxZoom = mapConfig.zoomrange[1];
     }
     this.Map = new ol_Map({
       controls: [control],
       target: element,
       view: new ol_View(vo)
     });
-    let layerOptions = {
-      hostName: hostName, groupName: this.Config.geoServerGroup,
-      maxResolution: this.Config.maxResolution, minResolution: this.Config.minResolution,
-      GWC: this.Config.GWC, resolutions: this.Config.resolutions, extent: this.Config.extent
-    }
-    if (!(this.Config.layers instanceof Array)) {
-      if (this.Config.layers.OMS) this.Map.addLayer(new ol_layer_Tile({ source: new ol_source_OSM() }));
-      if (this.Config.layers.bg) {
-        if (this.Config.layers.bg !== true)
-          Object.assign(layerOptions, this.Config.layers.bg)
-        this.Map.addLayer(R_BG_Layer(layerOptions));
-      }
+    this.InitLayers();
+  }
+  private InitLayers() {
+    this.FloorService.GetLayers().forEach(l => this.AddLayer(l));
 
-      if (this.Config.layers.regions) this.Map.addLayer(V_Regions_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
-      if (this.Config.layers.road) this.Map.addLayer(V_Roads_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
-      if (this.Config.layers.distance) this.Map.addLayer(V_Distance_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
-      if (this.Config.layers.marks) this.Map.addLayer(V_Marks_Layer({ hostName: hostName, groupName: this.Config.geoServerGroup }));
-    }
-
+    //layer of route
     let style = new ol_style({ stroke: new ol_stroke({ width: 6, color: "#04cf87" }) })
     this.RouteL = new ol_layer_vector({
       source: new ol_source_vector(),
       zIndex: 103,
       style: () => [style]
     });
-    this.Map.addLayer(this.RouteL);
+    this.AddLayer(this.RouteL);
 
+    //layer of range/region
     let rangStyle = new ol_style({ stroke: new ol_stroke({ width: 2, color: '#8ccf1c' }) })
     this.RangeL = new ol_layer_vector({
       source: new ol_source_vector(),
       zIndex: 102,
       style: () => [rangStyle]
     });
-    this.Map.addLayer(this.RangeL);
-
+    this.AddLayer(this.RangeL);
   }
   //region ZOOM
   /**
@@ -245,7 +252,7 @@ export class OlMapService {
     if (points) {
       let pointArray: Array<[number, number]> = [];
       points.forEach(p => {
-        pointArray.push(ol_proj.transform([p.X, p.Y], this.Config.srs, this.Config.frontEndEpsg));
+        pointArray.push(ol_proj.transform([p.X, p.Y], this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg));
       });
       let feature = new ol_feature(new ol_lineString(pointArray))
       this.RouteL.getSource().addFeature(feature);
@@ -265,7 +272,7 @@ export class OlMapService {
     if (ps) {
       let source = this.RangeL.getSource();
       let a: Array<[number, number]> = [];
-      ps.forEach(p => a.push(ol_proj.transform([p.X, p.Y], this.Config.srs, this.Config.frontEndEpsg)))
+      ps.forEach(p => a.push(ol_proj.transform([p.X, p.Y], this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg)))
       let feature = new ol_feature(new ol_polygon([a]))
       source.addFeature(feature);
       return feature;
@@ -288,8 +295,7 @@ export class OlMapService {
    * @param point 
    */
   public Focus(point: [number, number]) {
-    if (this.Config.srs)
-      point = ol_proj.transform(point, this.Config.srs, this.Config.frontEndEpsg)
+    point = ol_proj.transform(point, this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg)
     this.Map.getView().setCenter(point);
   }
 
@@ -468,7 +474,7 @@ export class OlMapService {
   public CreateFeature(type: "LineString" | "Circle" | "Polygon", points: [number, number][]): ol.Feature {
     let geom: ol.geom.Geometry
     //epsg transform
-    points = points.map(p => ol_proj.transform(p, this.Config.srs, this.Config.frontEndEpsg))
+    points = points.map(p => ol_proj.transform(p, this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg))
     switch (type.toLowerCase()) {
       case "linestring":
         geom = new ol_lineString(points)

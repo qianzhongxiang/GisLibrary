@@ -1,3 +1,4 @@
+import { FloorService } from './floor.service';
 import { DeviceService } from './../device-service/device.service';
 import { OlMapService } from './../map-service/ol-map.service';
 import { Component, OnInit, Input, Optional } from '@angular/core';
@@ -17,12 +18,11 @@ export interface Floor {
 export class FloorComponent implements OnInit {
   @Input('floors')
   public Floors: Floor[] = []
-  constructor(@Optional() private OlMapService: OlMapService, @Optional() private DeviceService: DeviceService) { }
+  constructor(public FloorService: FloorService) { }
 
   ngOnInit() {
   }
   Click(f: Floor) {
-    //if(this.OlMapService) this.OlMapService.setFloor
-    //if(this.DeviceService) this.DeviceService.setFloor
+    this.FloorService.SetFloor(f.index)
   }
 }

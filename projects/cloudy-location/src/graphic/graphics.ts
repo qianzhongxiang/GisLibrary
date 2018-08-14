@@ -134,18 +134,23 @@ class GraphicFactory implements IGraphicFactory {
 
 export interface GraphicOutInfo {
     /**
-     * I d_type
+     * Id_type
      */
     UniqueKey?: string
     Location: { x: number, y: number }
     Time?: Date | string
     ReveiveTime: Date
-    Graphic: IGraphic
+    Graphic?: IGraphic
     Id: string
     Parent: IGraphic
+    /**
+     * 楼层
+     */
+    Floor?: number
     Title?: string
-    type: string
-    // Pa th?: Tracker
+    Type: string
+    SubType?: string
+    // Path?: Tracker
     PArray?: Array<{ x: number, y: number, dur: number, time: string }>
     AllPs?: Array<{ x: number, y: number, dur: number, time: string }>
     Duration?: number

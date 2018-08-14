@@ -1,11 +1,12 @@
 import { TestBed, inject } from '@angular/core/testing';
 
 import { OlMapService } from './ol-map.service';
+import { ConfigurationService, FloorService } from '../../index';
 
 describe('OlMapService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [OlMapService]
+      providers: [ConfigurationService, FloorService, OlMapService]
     });
   });
 

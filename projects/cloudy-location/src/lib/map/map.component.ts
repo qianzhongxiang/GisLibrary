@@ -1,3 +1,5 @@
+import { ConfigurationService } from './../configuration.service';
+import { GraphicOutInfo } from './../../graphic/graphics';
 import { LogHelper } from 'vincijs';
 import { Ajax } from 'vincijs';
 import { OlMapService } from './../map-service/ol-map.service';
@@ -10,7 +12,7 @@ import ZoomSlider from 'ol/control/ZoomSlider'
 import Zoom from 'ol/control/Zoom'
 @Component({
   selector: 'cl-map',
-  template: '<div #div class="mapContainer" ></div>',
+  templateUrl: './map.component.html',
   styleUrls: ['./map.component.css']
 })
 export class MapComponent implements OnInit, AfterViewInit {
@@ -85,24 +87,18 @@ export class MapComponent implements OnInit, AfterViewInit {
       return str;
     }, layer);
   }
-  constructor(private OlMapService: OlMapService, @Optional() private DeviceService: DeviceService, @Optional() private AssetService: AssetService) { }
-  // public DeviceInit() {
-  //   if (this.DeviceService) {
-  //     this.OlMapService.AddLayer(this.DeviceService.GetLayer());
-  //     this.DeviceService.Bind(this.DeviceService.Events.WSOpened, this.InitWSType.bind(this))
-  //     this.DevPositionInit();
-  //     this.DeviceService.DataProcess(this.DataProcessCallback.bind(this))
-  //   }
-  // }
-  private DataProcessCallback(gif, type: DeviceStatus) {
+  constructor(public ConfigurationService: ConfigurationService, private OlMapService: OlMapService, @Optional() private DeviceService: DeviceService, @Optional() private AssetService: AssetService) { }
+
+  private DataProcessCallback(gif: GraphicOutInfo, type: DeviceStatus) {
     switch (type) {
       case DeviceStatus.NewOffline:
       case DeviceStatus.New:
-        let info = this.AssetService ? this.AssetService.Get(gif.Id, gif.type) : undefined;
+        let info = this.AssetService ? this.AssetService.Get(gif.Id, gif.Type) : undefined;
         if (!info) gif.Title = gif.Id;
         else {
           gif.Title = info.Title;
           gif.Color = info.Color;
+          gif.SubType = info.Category;
         }
         break;
       case DeviceStatus.Online:

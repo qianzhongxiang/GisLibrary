@@ -14,7 +14,7 @@ import VertorSource from 'ol/source/Vector'
 import VertorLayer from 'ol/layer/Vector'
 import ol_proj from 'ol/proj'
 import { GetProjByEPSG } from './../../utilities/olProjConvert';
-import { DataItem, MsgEntity } from './../../utilities/entities';
+import { DataItem, MsgEntity, Id_TypeGenerator } from './../../utilities/entities';
 import * as mqtt from 'mqtt'
 import { MapConifg } from './../../utilities/config';
 import * as jQuery from 'jquery'
@@ -38,7 +38,7 @@ class point extends BaseGraphic {
 @Injectable()
 export class DeviceService extends ObserverableWMediator {
   private socket: WebSocketor;
-  public Coms: { [key: string]: GraphicOutInfo } = {};
+  private Coms: { [key: string]: GraphicOutInfo } = {};
   private VectorSource: ol.source.Vector
   private Layer: ol.layer.Vector
   public Events = {
@@ -67,7 +67,7 @@ export class DeviceService extends ObserverableWMediator {
     this.FloorService.Bind(this.FloorService.Events.Changed, this.SetFloor.bind(this))
   }
   private StyleFn(f: ol.Feature) {
-    let id = f.getId(), c = this.Coms[id]
+    let id = f.get("uid"), type = f.get("type"), c = this.Obtain(id as string, type)
       , direction = c.Direction
     if (this.Filter && !this.Filter(c)) return [];
     let graphic = GetGraphicFactory().GetComponent(`${c.Type}.${c.SubType}`);
@@ -108,15 +108,25 @@ export class DeviceService extends ObserverableWMediator {
       this.AddFeature(this.Coms[n])
     }
   }
-
+  /**
+   * add or remove feature in map view
+   * @param info 
+   */
   private AddFeature(info: GraphicOutInfo) {
+    if (!this.ConfigurationService.MapConfig.floorSwitcher) {
+      return;
+    }
+    let idtype = Id_TypeGenerator(info.Id, info.Type), f
     if (info.Floor === undefined || info.Floor == this.FloorService.GetFloorNo()) {
       let graphic = info.Graphic = GetGraphicFactory().GetComponent(`${info.Type}.${info.SubType}`)
       let feature = graphic.GetGeom([info.Location.x, info.Location.y]);
-      feature.setId(info.Id);
+      feature.setId(idtype)
+      // feature.setId(info.Id);
+      feature.set("uid", info.Id)
       feature.set("type", info.Type)
+      //内部有验证 id是否存在 store是一个对象 so id可以是字符串
       this.VectorSource.addFeature(feature);
-    }
+    } else if (f = this.VectorSource.getFeatureById(idtype)) this.VectorSource.removeFeature(f)
   }
 
   /**
@@ -138,14 +148,14 @@ export class DeviceService extends ObserverableWMediator {
    * 获取GraphicOutInfo
    * @param Id
    */
-  public Obtain(Id: string): GraphicOutInfo {
-    return this.Coms[Id];
+  public Obtain(id: string, type: string): GraphicOutInfo {
+    return this.Coms[Id_TypeGenerator(id, type)];
   }
-  public GetPosition(Id: string): [number, number] {
-    return (this.Layer.getSource().getFeatureById(Id).getGeometry() as ol.geom.Point).getCoordinates();
+  public GetPosition(id: string, type: string): [number, number] {
+    return (this.Layer.getSource().getFeatureById(Id_TypeGenerator(id, type)).getGeometry() as ol.geom.Point).getCoordinates();
   }
-  public GetFeature(Id: string): ol.Feature {
-    return this.Layer.getSource().getFeatureById(Id)
+  public GetFeature(id: string, type: string): ol.Feature {
+    return this.Layer.getSource().getFeatureById(Id_TypeGenerator(id, type))
   }
   public UpdateTitle(id: string, type: string, title: string) {
     let f = this.Layer.getSource().getFeatureById(id)
@@ -169,15 +179,15 @@ export class DeviceService extends ObserverableWMediator {
      * @param location
      * @param duration
      */
-  ComponentMove(id: string, loc: { x: number; y: number; }, duration: number): DeviceService { //TODO 若chain堆积太多 则必须对象位置需跳过前面tweens
+  private ComponentMove(id: string, type: string, loc: { x: number; y: number; }, duration: number): DeviceService { //TODO 若chain堆积太多 则必须对象位置需跳过前面tweens
     let that = this, graphic: GraphicOutInfo
     //TODO 判断位置如果相同不进行任何操作;
-    if (graphic = this.Coms[id]) {
+    if (graphic = this.Obtain(id, type)) {
       let feature = this.VectorSource.getFeatureById(graphic.Id);
       if (feature) (feature.getGeometry() as ol.geom.Point).setCoordinates([loc.x, loc.y])
     }
     else
-      console.log("err: id:" + id + " 在Coms中不存在");
+      console.log("err:" + Id_TypeGenerator(id, type) + " 在Coms中不存在");
     return this;
   }
   /**
@@ -211,7 +221,7 @@ export class DeviceService extends ObserverableWMediator {
             let datas = JSON.parse(evt.data);
             let array = datas as Array<MsgEntity>
             array.forEach(i => {
-              let item = this.Coms[i.Uid];
+              let item = this.Obtain(i.Uid, i.DevType);
               if (item && !item.Offline) {
                 item.Offline = true;
                 callback(item, DeviceStatus.Offline)
@@ -251,7 +261,7 @@ export class DeviceService extends ObserverableWMediator {
               case devMsg:
                 let array = datas as Array<MsgEntity>
                 array.forEach(i => {
-                  let item = this.Coms[i.Uid];
+                  let item = this.Obtain(i.Uid, i.DevType);
                   if (item) item.Offline = true;
                 })
                 this.SetState(this.Events.MsgChange, array)
@@ -306,22 +316,22 @@ export class DeviceService extends ObserverableWMediator {
       ps = ol_proj.transform(ps, data.EPSG !== undefined ? GetProjByEPSG(data.EPSG) : this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg)
 
       let feature: ol.Feature
-      if (!this.Coms[data.UniqueId]) {
+      if (!(profile = this.Obtain(data.UniqueId, data.Type))) {
         profile = {
           Type: data.Type, Id: data.UniqueId, Location: { x: ps[0], y: ps[1] }
           , Parent: null
           , Title: data.Name
           , ReveiveTime: now
         }
-        this.Coms[data.UniqueId] = profile;
+        this.Coms[Id_TypeGenerator(data.UniqueId, data.Type)] = profile;
         type = data.Offline ? DeviceStatus.NewOffline : DeviceStatus.New;
       } else {
-        profile = this.Coms[data.UniqueId];
-        this.ComponentMove(data.UniqueId, { x: ps[0], y: ps[1] }, data.Duration);
+        this.ComponentMove(data.UniqueId, data.Type, { x: ps[0], y: ps[1] }, data.Duration);
         if (profile.Offline && !data.Offline) type = DeviceStatus.Online;
         else if (!profile.Offline && data.Offline) type = DeviceStatus.Offline;
         else type = DeviceStatus.Move
       }
+      profile.Floor = data.Floor;
       profile.Duration = data.Duration;
       profile.ReveiveTime = now;
       profile.Time = data.CollectTime;

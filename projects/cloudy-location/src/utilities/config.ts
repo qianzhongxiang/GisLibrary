@@ -17,6 +17,13 @@ export interface LayerGroup {
     regions?: boolean
     index?: number
 }
+export interface AssetConfig {
+    assetProfileUrl: string
+    /**
+     * 正序，目前不支持使用排序方法
+     */
+    sort?: boolean
+}
 
 export interface MapConifg {
     "geoServerUrl"?: string

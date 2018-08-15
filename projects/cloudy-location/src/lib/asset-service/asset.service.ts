@@ -1,6 +1,7 @@
+import { ConfigurationService } from './../configuration.service';
 import { Injectable } from '@angular/core';
 import { Ajax, LogHelper } from 'vincijs';
-import { AssetInfo } from './../../utilities/entities';
+import { AssetInfo, Id_TypeGenerator } from './../../utilities/entities';
 
 @Injectable()
 export class AssetService {
@@ -8,7 +9,7 @@ export class AssetService {
   private Assets: Array<AssetInfo>
   private Url: string
   private Sort: boolean
-  constructor() {
+  constructor(private ConfigurationService: ConfigurationService) {
   }
   public Init(Url: string, sort: boolean = true) {
     this.Url = Url;
@@ -26,13 +27,13 @@ export class AssetService {
     return this.Assets
   }
   private GetInfoRemote() {
-    new Ajax({ url: this.Url, data: { time: new Date().getTime() }, async: false, method: 'GET' }).done(d => {
+    new Ajax({ url: this.ConfigurationService.AssetConfig.assetProfileUrl, data: { time: new Date().getTime() }, async: false, method: 'GET' }).done(d => {
       if (d) {
         if (d instanceof Array)
           this.Assets = d;
         else this.Assets = d.Data;
-        this.Assets.forEach(i => { if (i.Uid) i.Id_Type = `${i.Uid.toLowerCase()}_${i.Type.toLowerCase()}` })
-        if (this.Sort) {
+        this.Assets.forEach(i => { if (i.Uid) i.Id_Type = Id_TypeGenerator(i.Uid, i.Type) })
+        if (this.ConfigurationService.AssetConfig.sort) {
           this.Assets = this.Assets.sort((a, b) => {
             let at = a.Title.toLowerCase(), bt = b.Title.toLowerCase();
             if (at < bt) return -1;

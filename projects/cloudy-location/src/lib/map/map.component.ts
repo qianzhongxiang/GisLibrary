@@ -35,12 +35,12 @@ export class MapComponent implements OnInit, AfterViewInit {
     if (this.DeviceService) {
       let layer = this.DeviceService.GetLayer();
       if (this.DeviceReceive) {
-        this.OlMapService.AddLayer(layer);
+        this.OlMapService.AddLayer(layer, true);
         this.DeviceService.Bind(this.DeviceService.Events.WSOpened, this.InitWSType.bind(this))
         this.DevPositionInit();
         this.DeviceService.DataProcess(this.DataProcessCallback.bind(this))
       } else if (this.DeviceLay) {
-        this.OlMapService.AddLayer(this.DeviceService.GetLayer());
+        this.OlMapService.AddLayer(layer, true);
       }
       if (this.Popup)
         this.ShowPopup(layer);

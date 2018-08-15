@@ -122,7 +122,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   OpenSetting() {
     let d = (this.AssetService.GetAssets() as Array<OffLines>).filter(a => {
-      let dev = this.DeviceService.Obtain(a.Uid);
+      let dev = this.DeviceService.Obtain(a.Uid, a.Type);
       if (dev) a.lastTime = new Date(dev.Time as string).toLocaleString();
       return (dev && dev.Offline) || (!dev);
     })

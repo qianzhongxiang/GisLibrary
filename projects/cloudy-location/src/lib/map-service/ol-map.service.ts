@@ -1,7 +1,7 @@
 import { FloorService } from './../floor/floor.service';
 import { ConfigurationService } from './../configuration.service';
 import { MapConifg } from './../../utilities/config';
-import { LogHelper, Ajax } from 'vincijs';
+import { LogHelper, Ajax, ObserverableWMediator } from 'vincijs';
 import { Injectable, Optional } from '@angular/core';
 import { ContextMenu_Super } from './../../utilities/ContextMenu_Super';
 import olFormatGeoJson from 'ol/format/GeoJson';
@@ -37,7 +37,8 @@ import V_Regions_Layer from '../../layers/V_Regions_Layer';
 export type eventName = 'dblclick' | 'click' | 'pointermove'
 export type ViewEventName = 'change:resolution'
 @Injectable()
-export class OlMapService {
+export class OlMapService extends ObserverableWMediator {
+  public Events = { FloorChanged: "FloorChanged" }
   private RouteL: ol.layer.Vector
   private RangeL: ol.layer.Vector
   private DrawL: ol.layer.Vector
@@ -57,6 +58,7 @@ export class OlMapService {
     }
   }
   constructor(private ConfigurationService: ConfigurationService, private FloorService: FloorService) {
+    super()
     // init options of floor service
     let mapConfig = this.ConfigurationService.MapConfig
     this.FloorService.SetOptions({
@@ -82,15 +84,28 @@ export class OlMapService {
    */
   public SetFloor() {
     //remove all layer even though drawing layer
-    this.Map.getLayers().forEach(l => this.Map.removeLayer(l))
+    [...this.Map.getLayers().getArray()]
+      .forEach(l => this.Map.removeLayer(l))
     //add layers from new floor
     this.InitLayers();
+    this.SetState(this.Events.FloorChanged)
   }
   /**
-   * AddLayer
+   * add layer for map view, call "AddLayer()" after Event.FloorChanged if floorSwitcher is setted by true
    * @param layer
+   * @param forPerFloor
    */
-  public AddLayer(layer: ol.layer.Layer) {
+  public AddLayer(layer: ol.layer.Layer, forPerFloor?: boolean) {
+    this.addLayer(layer);
+    if (forPerFloor)
+      this.FloorService.AddLayers([layer], false)
+    else
+      this.FloorService.AddLayers([layer])
+  }
+  /**
+   * 内部 添加图层方法
+   */
+  private addLayer(layer: ol.layer.Layer) {
     this.Map.addLayer(layer);
   }
   public RemoveLayer(layer) {
@@ -183,25 +198,7 @@ export class OlMapService {
     this.InitLayers();
   }
   private InitLayers() {
-    this.FloorService.GetLayers().forEach(l => this.AddLayer(l));
-
-    //layer of route
-    let style = new ol_style({ stroke: new ol_stroke({ width: 6, color: "#04cf87" }) })
-    this.RouteL = new ol_layer_vector({
-      source: new ol_source_vector(),
-      zIndex: 103,
-      style: () => [style]
-    });
-    this.AddLayer(this.RouteL);
-
-    //layer of range/region
-    let rangStyle = new ol_style({ stroke: new ol_stroke({ width: 2, color: '#8ccf1c' }) })
-    this.RangeL = new ol_layer_vector({
-      source: new ol_source_vector(),
-      zIndex: 102,
-      style: () => [rangStyle]
-    });
-    this.AddLayer(this.RangeL);
+    this.FloorService.GetLayers().forEach(l => this.addLayer(l));
   }
   //region ZOOM
   /**
@@ -237,6 +234,16 @@ export class OlMapService {
     // });
   }
   public DrawRoute(route: string | Array<{ X: number, Y: number }> | ol.Feature, styleOptions?: { width?: number, color?: string }): ol.Feature {
+    if (!this.RouteL) {
+      //layer of route
+      let style = new ol_style({ stroke: new ol_stroke({ width: 6, color: "#04cf87" }) })
+      this.RouteL = new ol_layer_vector({
+        source: new ol_source_vector(),
+        zIndex: 103,
+        style: () => [style]
+      });
+      this.AddLayer(this.RouteL);
+    }
     if (styleOptions) {
       styleOptions = Object.assign({ width: 6, color: "#04cf87" }, styleOptions)
       this.RouteL.setStyle(() => [new ol_style({ stroke: new ol_stroke({ width: styleOptions.width, color: styleOptions.color }) })])
@@ -265,6 +272,16 @@ export class OlMapService {
    * @param epsg 
    */
   public DrawRange(ps: Array<{ X: number, Y: number }> | ol.Feature): ol.Feature {
+    if (!this.RangeL) {
+      //layer of range/region
+      let rangStyle = new ol_style({ stroke: new ol_stroke({ width: 2, color: '#8ccf1c' }) })
+      this.RangeL = new ol_layer_vector({
+        source: new ol_source_vector(),
+        zIndex: 102,
+        style: () => [rangStyle]
+      });
+      this.AddLayer(this.RangeL);
+    }
     if (ps instanceof ol_feature) {
       this.RangeL.getSource().addFeature(ps);
       return ps;
@@ -424,7 +441,7 @@ export class OlMapService {
         source: new ol_source_vector(),
         zIndex: 105
       });
-      this.Map.addLayer(this.DrawL);
+      this.AddLayer(this.DrawL);
     }
     this.DrawL.setStyle((f: ol.Feature) => {
       if (styles) return styles(f)

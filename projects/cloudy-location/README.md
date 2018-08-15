@@ -3,6 +3,21 @@
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 6.0.3.
 ## Migration
 ### 0.0.2=>0.0.3:
+### 0.1.1=>0.1.2:
+fill out asset configuration likes
+``` 
+ConfigurationService.AssetConfig=AssetConfig
+```
+AssetConfig
+``` ts
+export interface AssetConfig {
+    assetProfileUrl: string
+    /**
+     * 正序，目前不支持使用排序方法
+     */
+    sort?: boolean
+}
+```
 
 ## Options
 ### Custom Resolutions

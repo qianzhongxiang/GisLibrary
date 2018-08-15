@@ -1,5 +1,5 @@
 import { MsgType } from "./enum";
-
+export let Id_TypeGenerator = (id: string, type: string) => `${id.toLowerCase()}_${type.toLowerCase()}`
 export interface DataItem {
     X: number
     Y: number
@@ -9,9 +9,11 @@ export interface DataItem {
     Name: string
     UniqueId: string
     Duration: number
-    Offline: boolean
-    Direction: number
+    Offline?: boolean
+    Direction?: number
     CustomInterval: number
+    Region?: string
+    Floor?: number
 }
 export interface AssetInfo {
     Id: string

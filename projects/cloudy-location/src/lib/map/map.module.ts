@@ -1,3 +1,5 @@
+import { ConfigurationService } from './../configuration.service';
+import { AssetService } from './../asset-service/asset.service';
 import { FloorComponent } from './../floor/floor.component';
 import { FloorService } from './../floor/floor.service';
 import { DeviceService } from './../device-service/device.service';
@@ -17,7 +19,9 @@ import { HttpClientModule } from '@angular/common/http';
   providers: [
     OlMapService,
     DeviceService,
-    FloorService
+    FloorService,
+    AssetService,
+    ConfigurationService
   ]
 })
 export class MapModule { }

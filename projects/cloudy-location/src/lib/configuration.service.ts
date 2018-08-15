@@ -1,4 +1,4 @@
-import { MapConifg } from './../utilities/config';
+import { MapConifg, AssetConfig } from './../utilities/config';
 import { Injectable } from '@angular/core';
 
 @Injectable({
@@ -19,10 +19,21 @@ export class ConfigurationService {
     GWC: true,
     floorSwitcher: true
   }
+  private assetConfig: AssetConfig = {
+    assetProfileUrl: "/assets/local-assets.json",
+    sort: true
+  }
   public get MapConfig(): MapConifg {
     return this.mapConfig;
   }
   public set MapConfig(config: MapConifg) {
     Object.assign(this.mapConfig, config);
+  }
+
+  public get AssetConfig(): AssetConfig {
+    return this.assetConfig;
+  }
+  public set AssetConfig(config: AssetConfig) {
+    Object.assign(this.assetConfig, config)
   }
 }

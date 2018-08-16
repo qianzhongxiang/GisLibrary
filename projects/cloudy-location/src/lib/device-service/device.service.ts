@@ -92,6 +92,10 @@ export class DeviceService extends ObserverableWMediator {
 
     return decorator.Style();
   }
+
+  public Refresh() {
+    this.Layer.getSource().refresh();
+  }
   /**
    * 为graphy提供装饰器生成
    */
@@ -105,18 +109,30 @@ export class DeviceService extends ObserverableWMediator {
     //remove all feature
     this.Layer.getSource().clear();
     for (let n in this.Coms) {
-      this.AddFeature(this.Coms[n])
+      this.AddFeature(this.Coms[n], true)
     }
   }
   /**
    * add or remove feature in map view
    * @param info 
    */
-  private AddFeature(info: GraphicOutInfo) {
+  private AddFeature(info: GraphicOutInfo, newF?: boolean) {
+
+    let idtype = Id_TypeGenerator(info.Id, info.Type), f
     if (!this.ConfigurationService.MapConfig.floorSwitcher) {
+      if (newF) {
+        let graphic = info.Graphic = GetGraphicFactory().GetComponent(`${info.Type}.${info.SubType}`)
+        let feature = graphic.GetGeom([info.Location.x, info.Location.y]);
+        feature.setId(idtype)
+        // feature.setId(info.Id);
+        feature.set("uid", info.Id)
+        feature.set("type", info.Type)
+        //内部有验证 id是否存在 store是一个对象 so id可以是字符串
+        this.VectorSource.addFeature(feature);
+      }
       return;
     }
-    let idtype = Id_TypeGenerator(info.Id, info.Type), f
+
     if (info.Floor === undefined || info.Floor == this.FloorService.GetFloorNo()) {
       let graphic = info.Graphic = GetGraphicFactory().GetComponent(`${info.Type}.${info.SubType}`)
       let feature = graphic.GetGeom([info.Location.x, info.Location.y]);
@@ -339,8 +355,10 @@ export class DeviceService extends ObserverableWMediator {
       profile.Offline = data.Offline;
       profile.Direction = data.Direction;
       callback(profile, type, data);
+      //callback 会为profile.subType 赋值
       if (type == DeviceStatus.New || type == DeviceStatus.NewOffline)
-        //callback 会为profile.subType 赋值
+        this.AddFeature(profile, true);
+      else
         this.AddFeature(profile);
 
       this.SetState(this.Events.DeviceUpdate, { data: profile, type: type })

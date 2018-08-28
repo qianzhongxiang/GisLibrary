@@ -21,6 +21,7 @@ export default (options: RasterLayerOptions): ol.layer.Tile => {
         grid = new ol_tilegrid_tilegrid({
             resolutions: options.resolutions,
             extent: options.extent // [1.314009166E7, 3053691.66, 1.370329166E7, 3872891.66]
+            , origins: options.origins
         })
     }
     return new ol_layer_Tile({

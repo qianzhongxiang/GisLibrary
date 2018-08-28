@@ -1,4 +1,4 @@
-import { MapConifg, AssetConfig } from './../utilities/config';
+import { MapConifg, AssetConfig, DataMapping } from './../utilities/config';
 import { Injectable } from '@angular/core';
 
 @Injectable({
@@ -7,6 +7,25 @@ import { Injectable } from '@angular/core';
 export class ConfigurationService {
 
   constructor() { }
+  /**
+   * 目前未实现
+   */
+  private dataMapping: DataMapping = {
+    X: "X",
+    Y: "Y",
+    Z: "Z",
+    EPSG: "EPSG",
+    Type: "Type",
+    CollectTime: "CollectTime",
+    Name: "Name",
+    UniqueId: "UniqueId",
+    Duration: "Duration",
+    Offline: "Offline",
+    Direction: "Direction",
+    CustomInterval: "CustomInterval",
+    Region: "Region",
+    Floor: "Floor"
+  }
   private mapConfig: MapConifg = {
     geoServerUrl: "http://localhost:8080/geoserver",
     trackOfComponent: false,

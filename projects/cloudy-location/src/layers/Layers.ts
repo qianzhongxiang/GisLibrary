@@ -6,6 +6,7 @@ export interface LayerOptions {
     minResolution?: number
     resolutions?: Array<number>
     extent?: [number, number, number, number]
+    origins?: [number, number][]
 }
 
 export interface RasterLayerOptions extends LayerOptions {

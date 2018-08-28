@@ -24,6 +24,22 @@ export interface AssetConfig {
      */
     sort?: boolean
 }
+export interface DataMapping {
+    X: string
+    Y: string
+    Z: string
+    EPSG: string
+    Type: string
+    CollectTime: string
+    Name?: string
+    UniqueId: string
+    Duration?: string
+    Offline?: string
+    Direction?: string
+    CustomInterval?: string
+    Region?: string
+    Floor?: string
+}
 
 export interface MapConifg {
     "geoServerUrl"?: string
@@ -49,6 +65,7 @@ export interface MapConifg {
     "infoUrl"?: string
     "GWC"?: boolean
     floorSwitcher?: boolean
+    origins?: [number, number][]
 }
 export interface TableConfig {
     columns: Array<TableItem>

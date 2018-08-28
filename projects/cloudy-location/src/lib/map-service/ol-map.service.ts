@@ -66,6 +66,7 @@ export class OlMapService extends ObserverableWMediator {
         hostName: mapConfig.geoServerUrl
         , groupName: mapConfig.geoServerGroup, GWC: mapConfig.GWC, maxResolution: mapConfig.maxResolution
         , minResolution: mapConfig.minResolution, resolutions: mapConfig.resolutions, extent: mapConfig.extent
+        , origins: mapConfig.origins
       }
       , floors: (mapConfig.layers instanceof Array ? mapConfig.layers : [mapConfig.layers])
     })
@@ -181,11 +182,11 @@ export class OlMapService extends ObserverableWMediator {
       // console.log(e);
     });
     let vo: olx.ViewOptions =// { zoom: 4, center: [0, 0] }
-      {
-        center: ol_proj.transform(mapConfig.centerPoint as [number, number], mapConfig.centerSrs, mapConfig.frontEndEpsg), zoom: mapConfig.zoom,
-        zoomFactor: mapConfig.zoomfactor,// minResolution: mapConfig.minResolution, maxResolution: mapConfig.maxResolution,
-        resolutions: mapConfig.resolutions
-      }
+    {
+      center: ol_proj.transform(mapConfig.centerPoint as [number, number], mapConfig.centerSrs, mapConfig.frontEndEpsg), zoom: mapConfig.zoom,
+      zoomFactor: mapConfig.zoomfactor, minResolution: mapConfig.minResolution, maxResolution: mapConfig.maxResolution,
+      resolutions: mapConfig.resolutions
+    }
     if (mapConfig.zoomrange) {
       vo.minZoom = mapConfig.zoomrange[0];
       vo.maxZoom = mapConfig.zoomrange[1];

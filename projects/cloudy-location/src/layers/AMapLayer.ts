@@ -1,6 +1,5 @@
 import ol_layer_Tile from 'ol/layer/tile';
 import ol_source_xyz from 'ol/source/XYZ'
-import ol_proj from 'ol/proj'
 export default new ol_layer_Tile({
     source: new ol_source_xyz({
         minZoom: 3,

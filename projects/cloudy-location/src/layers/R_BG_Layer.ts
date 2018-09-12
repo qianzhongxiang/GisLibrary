@@ -6,7 +6,7 @@ import { RasterLayerOptions } from './Layers';
 export default (options: RasterLayerOptions): ol.layer.Tile => {
     options = Extend(options, { tiled: true })
     let p = {
-        'FORMAT': 'image/jpeg',
+        'FORMAT': 'image/png',
         'VERSION': '1.1.1',
         tiled: options.tiled,
         STYLES: '',

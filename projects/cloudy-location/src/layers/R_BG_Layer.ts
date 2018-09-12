@@ -11,9 +11,6 @@ export default (options: RasterLayerOptions): ol.layer.Tile => {
         tiled: options.tiled,
         STYLES: '',
         LAYERS: `${options.groupName}:Bg`,
-        CRS: 'EPSG:3857',
-        SRS: 'EPSG:3857',
-        TRANSPARENT: false
     }
     let grid: ol.tilegrid.TileGrid
     if (options.resolutions) {

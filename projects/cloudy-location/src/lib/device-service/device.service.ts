@@ -5,24 +5,18 @@ import { TextGraphic } from './../../graphic/textGraphic';
 import { Decorator } from './../../graphic/decorator';
 import { OfflineDecorator } from './../../graphic/offlineDecorator';
 import { HighlightDecorator } from './../../graphic/highlightDecorator';
-import { Messaging } from './../../utilities/mqttws31';
 import { BaseGraphic } from './../../graphic/BaseGraphic';
 import { Injectable } from '@angular/core';
-import { GraphicOutInfo, GetGraphicFactory, Graphic, IStyleOptions, IGraphic } from "./../../graphic/graphics";
-import { GetConfigManager, IObseverable, ObserverableWMediator, LogHelper, WebSocketor, Composit } from 'vincijs';
+import { GraphicOutInfo, GetGraphicFactory, IGraphic } from "./../../graphic/graphics";
+import { ObserverableWMediator, LogHelper, WebSocketor, Composit } from 'vincijs';
 import VertorSource from 'ol/source/Vector'
 import VertorLayer from 'ol/layer/Vector'
 import ol_proj from 'ol/proj'
 import { GetProjByEPSG } from './../../utilities/olProjConvert';
 import { DataItem, MsgEntity, Id_TypeGenerator } from './../../utilities/entities';
 import * as mqtt from 'mqtt'
-import { MapConifg } from './../../utilities/config';
 import * as jQuery from 'jquery'
 import { DeviceStatus } from '../../utilities/enum';
-// import ol_style = require('ol/style/Style')
-// import ol_stroke = require('ol/style/Stroke')
-
-const DIRECTION = "direction"
 class point extends BaseGraphic {
   constructor() {
     super();
@@ -46,11 +40,8 @@ export class DeviceService extends ObserverableWMediator {
     , DeviceUpdate: "DeviceUpdate", MsgChange: "MsgChange", StyleCreating: "StyleCreating"
   }
   private HighlightedId: string
-  private autoReconnectInterval: number = 5000
-  private duration: number = 5000
   public durTimes: number = 1
   private Filter: (graphic: GraphicOutInfo) => boolean
-  private Offlines: Array<{ id: string, type: string }>
   constructor(private ConfigurationService: ConfigurationService, private FloorService: FloorService) {
     super();
     GetGraphicFactory().SetDef(point, 'base');
@@ -173,7 +164,7 @@ export class DeviceService extends ObserverableWMediator {
   public GetFeature(id: string, type: string): ol.Feature {
     return this.Layer.getSource().getFeatureById(Id_TypeGenerator(id, type))
   }
-  public UpdateTitle(id: string, type: string, title: string) {
+  public UpdateTitle(id: string, title: string) {
     let f = this.Layer.getSource().getFeatureById(id)
     if (!f) { LogHelper.Log("UpdateTitle：can not found feature with id:" + id); return; }
     f.set("name", title);
@@ -195,15 +186,15 @@ export class DeviceService extends ObserverableWMediator {
      * @param location
      * @param duration
      */
-  private ComponentMove(id: string, type: string, loc: { x: number; y: number; }, duration: number): DeviceService { //TODO 若chain堆积太多 则必须对象位置需跳过前面tweens
-    let that = this, graphic: GraphicOutInfo
+  private ComponentMove(id: string, type: string, loc: { x: number; y: number; }): DeviceService { //TODO 若chain堆积太多 则必须对象位置需跳过前面tweens
+    let graphic: GraphicOutInfo, idtype = Id_TypeGenerator(id, type)
     //TODO 判断位置如果相同不进行任何操作;
     if (graphic = this.Obtain(id, type)) {
-      let feature = this.VectorSource.getFeatureById(graphic.Id);
+      let feature = this.VectorSource.getFeatureById(idtype);
       if (feature) (feature.getGeometry() as ol.geom.Point).setCoordinates([loc.x, loc.y])
     }
     else
-      console.log("err:" + Id_TypeGenerator(id, type) + " 在Coms中不存在");
+      console.log("err:" + + " 在Coms中不存在");
     return this;
   }
   /**
@@ -311,7 +302,7 @@ export class DeviceService extends ObserverableWMediator {
   //TODO to become a function of utility
   private Jsonp(url: string, data: any, callback: (data: string) => void) {
     jQuery.ajax(url, {
-      type: "GET", dataType: "jsonp", data: data, success: callback, error: (xhr, s, e) => {
+      type: "GET", dataType: "jsonp", data: data, success: callback, error: () => {
         console.log("err")
       }
     })
@@ -331,7 +322,6 @@ export class DeviceService extends ObserverableWMediator {
         ps = posiConvertor(ps);
       ps = ol_proj.transform(ps, data.EPSG !== undefined ? GetProjByEPSG(data.EPSG) : this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg)
 
-      let feature: ol.Feature
       if (!(profile = this.Obtain(data.UniqueId, data.Type))) {
         profile = {
           Type: data.Type, Id: data.UniqueId, Location: { x: ps[0], y: ps[1] }
@@ -342,7 +332,7 @@ export class DeviceService extends ObserverableWMediator {
         this.Coms[Id_TypeGenerator(data.UniqueId, data.Type)] = profile;
         type = data.Offline ? DeviceStatus.NewOffline : DeviceStatus.New;
       } else {
-        this.ComponentMove(data.UniqueId, data.Type, { x: ps[0], y: ps[1] }, data.Duration);
+        this.ComponentMove(data.UniqueId, data.Type, { x: ps[0], y: ps[1] });
         if (profile.Offline && !data.Offline) type = DeviceStatus.Online;
         else if (!profile.Offline && data.Offline) type = DeviceStatus.Offline;
         else type = DeviceStatus.Move
@@ -383,7 +373,7 @@ export class DeviceService extends ObserverableWMediator {
     this.socket.SendMsg(postData);
     return this;
   }
-  ProcessClose(onclose?: () => void): DeviceService {
+  ProcessClose(): DeviceService {
     this.socket.Close();
     this.socket = undefined;
     return this;

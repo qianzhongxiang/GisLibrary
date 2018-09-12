@@ -1,5 +1,4 @@
-import { Graphic, IGraphic, IStyleOptions } from "./graphics";
-import { Geometries } from "./geometries";
+import { Graphic, IGraphic } from "./graphics";
 import { Materials } from "./materials";
 
 export class TextGraphic extends Graphic implements IGraphic {

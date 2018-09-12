@@ -1,6 +1,5 @@
-import { Composit, Singleton, LogHelper, IComposit } from "vincijs";
+import { Composit, Singleton, IComposit } from "vincijs";
 import { Geometries } from "./geometries";
-import { Materials, StyleType, STYLETYPE } from "./materials";
 
 export interface IStyleOptions {
     color?: string
@@ -59,7 +58,7 @@ export abstract class Graphic extends Composit implements IGraphic {
         return res;
     }
 
-    public ToString(data: any): string {
+    public ToString(): string {
         return this.Graphic ? this.Graphic.name : undefined;
     }
 }

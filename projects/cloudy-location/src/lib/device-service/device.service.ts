@@ -66,8 +66,7 @@ export class DeviceService extends ObserverableWMediator {
     let decorator = GetGraphicFactory().GetDef('decorator') as Decorator
     decorator.RemoveAll();
     decorator.Add(graphic);
-    //TODO use AssignOptions() to  substitute for SetOptions()
-    decorator.SetOptions({
+    decorator.AssignOption({
       color: c.Color, content: c.Title || id.toString()
       , rotation: direction
     })

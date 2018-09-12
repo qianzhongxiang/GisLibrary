@@ -3,15 +3,10 @@ import { Materials, StyleType, STYLETYPE } from "./materials";
 export const STYLENAME = "styleName"
 
 export class Decorator extends Graphic implements IGraphic {
-    // /**
-    // *TODO use AssignOptions() to  substitute for SetOptions()
-    //  * to set text content; color; 
-    //  * @param options 
-    //  */
-    // public SetOptions(options: IStyleOptions) {
-    //     this.Options = options;
-    // }
-    protected Decorate(style: ol.style.Style, styleType: StyleType): ol.style.Style {
+    public SetOptions(options: IStyleOptions) {
+        this.Options = options;
+    }
+    protected Decorate(style: ol.style.Style, styleType: StyleType, _styleName: string): ol.style.Style {
         switch (styleType) {
             case StyleType.text:
                 let t = style.getText();
@@ -38,7 +33,7 @@ export class Decorator extends Graphic implements IGraphic {
     }
     public Style(): ol.style.Style[] {
         let styles = super.Style();
-        styles.forEach(s => this.Decorate(s, s[STYLETYPE] as any))
+        styles.forEach(s => this.Decorate(s, s[STYLETYPE] as any, s[STYLENAME]))
         return styles;
     }
 }

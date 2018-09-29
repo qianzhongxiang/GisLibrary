@@ -1,16 +1,15 @@
-import { Graphic, IGraphic, IStyleOptions } from "./graphics";
+import { Graphic, IGraphic } from "./graphics";
 import { Materials, StyleType, STYLETYPE } from "./materials";
 export const STYLENAME = "styleName"
 
 export class Decorator extends Graphic implements IGraphic {
-    public SetOptions(options: IStyleOptions) {
-        this.Options = options;
-    }
     protected Decorate(style: ol.style.Style, styleType: StyleType, _styleName: string): ol.style.Style {
         switch (styleType) {
             case StyleType.text:
                 let t = style.getText();
                 t.getFill().setColor(this.Options.color);
+                t.getStroke().setColor(this.Options.strokeColor);
+                t.getStroke().setWidth(this.Options.strokeWidth);
                 t.setText(this.Options.content)
                 break;
             case StyleType.fontIcon:

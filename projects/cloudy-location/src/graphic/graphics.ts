@@ -1,4 +1,4 @@
-import { Composit, Singleton, IComposit } from "vincijs";
+import { Composit, Singleton, IComposit, Extend } from "vincijs";
 import { Geometries } from "./geometries";
 
 export interface IStyleOptions {
@@ -46,11 +46,11 @@ export abstract class Graphic extends Composit implements IGraphic {
     }
 
     public AssignOption(options: IStyleOptions): IStyleOptions {
-        return Object.assign(this.Options, options)
+        return this.Options = Extend(this.Options, options)
     }
+
     public Style(): ol.style.Style[] {
         if (!this.Children || this.Children.length <= 0) return [];
-
         let res: ol.style.Style[] = []
         this.Children.forEach((c: IGraphic) => {
             res.push(...c.Style())

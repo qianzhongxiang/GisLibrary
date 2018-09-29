@@ -1,12 +1,11 @@
 import { OfflineAssetComponent } from './../offline-asset/offline-asset.component';
 import { AssetService } from './../asset-service/asset.service';
 import { DeviceStatus } from './../../utilities/enum';
-import { ToolbarConfig, ICate, AssetInfo, OffLines } from './../../utilities/entities';
+import { ToolbarConfig, ICate, OffLines } from './../../utilities/entities';
 import { GraphicOutInfo } from './../../graphic/graphics';
 import { DeviceService } from './../device-service/device.service';
-import { Component, OnInit, TemplateRef, ElementRef, ViewChild, Inject, Input, AfterViewInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { Extend, DataSource, VinciWindow, VinciTable, IsMobile } from 'vincijs';
+import { Component, OnInit, Inject, Input, AfterViewInit } from '@angular/core';
+import { Extend, IsMobile } from 'vincijs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 @Component({
   selector: 'cl-toolbar',
@@ -16,7 +15,6 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dial
 export class ToolbarComponent implements OnInit, AfterViewInit {
   SettingModalRef: any;
   private offline: ICate
-  private unavaliable: ICate
   public mobile: boolean = IsMobile.any() ? true : false
   ngAfterViewInit(): void {
     setInterval(() => { this.Timer = new Date().toLocaleTimeString() }, 1000)
@@ -70,8 +68,6 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   TempCatesDetailed: Array<ICate>
   @Input()
   public Config: ToolbarConfig
-  private Unconnected: VinciTable
-  private CateIndex: { [code: string]: { ci: number, cdi: number } }
   constructor(private AssetService: AssetService, private DeviceService: DeviceService, private Dialog: MatDialog) {
 
   }
@@ -90,43 +86,13 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       if (v == "changed") this.FilterChanged();
     })
   }
-  // public OpenAssetsMobile() {
-  //   let input = document.createElement("input")
-  //     , list = document.createElement("div")
-  //     , c = document.createElement('div')
-  //   list.style.overflow = "auto";
-  //   list.style.height = "400px";
-  //   input.classList.add("form-control-sm")
-  //   // container.classList.add("");
-  //   c.appendChild(input);
-  //   c.appendChild(list);
-  //   let vinciInput = new VinciInput(input, {
-  //     Type: "text", AutoParameters: {
-  //       TextField: "Title", ValueField: "Id_Type",
-  //       ItemsArea: list, DataSource: new DataSource({
-  //         Read: p => {
-  //           let d = [];
-  //           d = this.AssetService.GetAssets();
-  //           p.Success(d);
-  //         }
-  //       }),
-  //       Columns: [{ field: "Title", title: "名称" }, { title: "类型", field: "CategoryName" }]
-  //     }
-  //   })
-  //   vinciInput.Bind(vinciInput.Events.Change, msg => {
-  //     windo.Close();
-  //   });
-  //   let windo = new VinciWindow(c, { AutoDestory: true, Title: "选择设备" });
-  //   windo.Open();
-  // }
-
   OpenSetting() {
     let d = (this.AssetService.GetAssets() as Array<OffLines>).filter(a => {
       let dev = this.DeviceService.Obtain(a.Uid, a.Type);
       if (dev) a.lastTime = new Date(dev.Time as string).toLocaleString();
       return (dev && dev.Offline) || (!dev);
     })
-    let ref = this.Dialog.open(SettingDialogComponent, { id: 'settingDialog', width: '50%', position: { top: '20px' }, data: { dialog: this.Dialog, dataSource: d } })
+    this.Dialog.open(SettingDialogComponent, { id: 'settingDialog', width: '50%', position: { top: '20px' }, data: { dialog: this.Dialog, dataSource: d } })
   }
   FilterChanged() {
     this.DeviceService.SetShowItem((gif) => {

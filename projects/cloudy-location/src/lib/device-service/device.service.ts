@@ -163,8 +163,8 @@ export class DeviceService extends ObserverableWMediator {
   public GetFeature(id: string, type: string): ol.Feature {
     return this.Layer.getSource().getFeatureById(Id_TypeGenerator(id, type))
   }
-  public UpdateTitle(id: string, title: string) {
-    let f = this.Layer.getSource().getFeatureById(id)
+  public UpdateTitle(id: string, type: string, title: string) {
+    let f = this.Layer.getSource().getFeatureById(Id_TypeGenerator(id, type))
     if (!f) { LogHelper.Log("UpdateTitle：can not found feature with id:" + id); return; }
     f.set("name", title);
   }

@@ -1,3 +1,4 @@
+import { ConfigurationService } from './../configuration.service';
 import { DeviceService } from './../device-service/device.service';
 import { MapConifg } from './../../utilities/config';
 import { DataItem } from './../../utilities/entities';
@@ -12,11 +13,7 @@ export class HistoryService {
   private intervalFlag: number
   public Data: Array<DataItem>
   private currentIndex: number = 0
-  private Config: MapConifg
-  constructor() { }
-  public Init(config: MapConifg) {
-    this.Config = config;
-  }
+  constructor(private ConfigurationService: ConfigurationService) { }
   public Subscribe(callback?: (data: Array<DataItem>) => void
     , currentUpdate?: (item: DataItem, index: number) => void
     , routeCallback?: (data: Array<DataItem>) => void) {
@@ -59,7 +56,7 @@ export class HistoryService {
    */
   public GetData(datas: Array<{ uid: string, type: string, sTime: string, eTime: string }>, callback?: (data: Array<DataItem>) => void) {
     this.Clean()
-    let res: Location, url = this.Config.webService + `/HistoryGet?callback=?`
+    let res: Location, url = this.ConfigurationService.MapConfig.webService + `/HistoryGet?callback=?`
       , dataIndex = 0, index = 1, count = 200;
 
     // let postdata = { uid: uid, type: type, stime: sTime.toISOString(), etime: eTime.toISOString(), index: 1, count: 200 };

@@ -1,15 +1,12 @@
 import { FloorService } from './../floor/floor.service';
 import { ConfigurationService } from './../configuration.service';
-import { MapConifg } from './../../utilities/config';
 import { LogHelper, Ajax, ObserverableWMediator } from 'vincijs';
-import { Injectable, Optional } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { ContextMenu_Super } from './../../utilities/ContextMenu_Super';
 import olFormatGeoJson from 'ol/format/GeoJson';
 import ol_Map from 'ol/map';
 import ol_style from 'ol/style/Style';
 import ol_stroke from 'ol/style/Stroke';
-import ol_layer_Tile from 'ol/layer/tile';
-import ol_source_OSM from 'ol/source/osm';
 import ol_layer_vector from 'ol/layer/Vector';
 import ol_source_vector from 'ol/source/Vector';
 import ol_View from 'ol/view';
@@ -18,30 +15,60 @@ import ol_feature from 'ol/feature';
 import ol_polygon from 'ol/geom/Polygon';
 import ol_lineString from 'ol/geom/LineString';
 import ol_circle from 'ol/geom/Circle';
-import ol_point from 'ol/geom/Point';
-import ol_geometry from 'ol/geom/Geometry';
 import ol_draw from 'ol/interaction/Draw'
 import ol_select from 'ol/interaction/Select';
-import R_BG_Layer from "./../../layers/R_BG_Layer";
-import V_Roads_Layer from "./../../layers/V_Roads_Layer";
-import V_Distance_Layer from "./../../layers/V_Distance_Layer";
-import V_Marks_Layer from "./../../layers/V_Marks_Layer";
 import ol_PostionControl from 'ol/control/mouseposition';
 import ol_box_selection from 'ol/interaction/DragBox'
 import ol_events_condition from 'ol/events/condition'
 import olpopup from 'ol-popup'
 import overlay from 'ol/Overlay';
 import { olx } from 'openlayers';
-import V_Regions_Layer from '../../layers/V_Regions_Layer';
 
 export type eventName = 'dblclick' | 'click' | 'pointermove'
 export type ViewEventName = 'change:resolution'
 @Injectable()
 export class OlMapService extends ObserverableWMediator {
   public Events = { FloorChanged: "FloorChanged" }
-  private RouteL: ol.layer.Vector
-  private RangeL: ol.layer.Vector
-  private DrawL: ol.layer.Vector
+  private _routel: ol.layer.Vector
+  private get RouteL(): ol.layer.Vector {
+    if (!this._routel) {
+      //layer of route
+      let style = new ol_style({ stroke: new ol_stroke({ width: 6, color: "#04cf87" }) })
+      this._routel = new ol_layer_vector({
+        source: new ol_source_vector(),
+        zIndex: 103,
+        style: () => [style]
+      });
+      this.AddLayer(this._routel);
+    }
+    return this._routel;
+  }
+  private _rangel: ol.layer.Vector
+  private get RangeL(): ol.layer.Vector {
+    if (!this._rangel) {
+      //layer of range/region
+      let rangStyle = new ol_style({ stroke: new ol_stroke({ width: 2, color: '#8ccf1c' }) })
+      this._rangel = new ol_layer_vector({
+        source: new ol_source_vector(),
+        zIndex: 102,
+        style: () => [rangStyle]
+      });
+      this.AddLayer(this._rangel);
+    }
+    return this._rangel;
+  }
+  private _drawl: ol.layer.Vector
+  private get DrawL(): ol.layer.Vector {
+    if (!this._drawl) {
+      this._drawl = new ol_layer_vector({
+        source: new ol_source_vector(),
+        zIndex: 105
+      });
+      this.AddLayer(this._drawl);
+    }
+    return this._drawl;
+  }
+
   private DefaultStyle = new ol_style({ stroke: new ol_stroke({ width: 2, color: '#8ccf1c' }) })
   /**
    * 获取矢量图层
@@ -71,12 +98,10 @@ export class OlMapService extends ObserverableWMediator {
       , floors: (mapConfig.layers instanceof Array ? mapConfig.layers : [mapConfig.layers])
     })
     //listening to changing of floor, and call setFloor
-    this.FloorService.Bind(this.FloorService.Events.Changed, msg => this.SetFloor())
+    this.FloorService.Bind(this.FloorService.Events.Changed, () => this.SetFloor())
   }
 
   private Map: ol.Map
-  private CurrentPointByMouse: [number, number]
-
   public Show(data: { target: HTMLElement }) {
     this.EnvironmentConfig(data.target);
   }
@@ -178,9 +203,7 @@ export class OlMapService extends ObserverableWMediator {
   private EnvironmentConfig(element: HTMLElement) {
     let mapConfig = this.ConfigurationService.MapConfig
     let control = new ol_PostionControl({ target: document.createElement("div"), projection: "EPSG:3857" });
-    control.on('change', (e: ol.events.Event) => {
-      // console.log(e);
-    });
+
     let vo: olx.ViewOptions =// { zoom: 4, center: [0, 0] }
     {
       center: ol_proj.transform(mapConfig.centerPoint as [number, number], mapConfig.centerSrs, mapConfig.frontEndEpsg), zoom: mapConfig.zoom,
@@ -235,16 +258,7 @@ export class OlMapService extends ObserverableWMediator {
     // });
   }
   public DrawRoute(route: string | Array<{ X: number, Y: number }> | ol.Feature, styleOptions?: { width?: number, color?: string }): ol.Feature {
-    if (!this.RouteL) {
-      //layer of route
-      let style = new ol_style({ stroke: new ol_stroke({ width: 6, color: "#04cf87" }) })
-      this.RouteL = new ol_layer_vector({
-        source: new ol_source_vector(),
-        zIndex: 103,
-        style: () => [style]
-      });
-      this.AddLayer(this.RouteL);
-    }
+
     if (styleOptions) {
       styleOptions = Object.assign({ width: 6, color: "#04cf87" }, styleOptions)
       this.RouteL.setStyle(() => [new ol_style({ stroke: new ol_stroke({ width: styleOptions.width, color: styleOptions.color }) })])
@@ -273,16 +287,7 @@ export class OlMapService extends ObserverableWMediator {
    * @param epsg 
    */
   public DrawRange(ps: Array<{ X: number, Y: number }> | ol.Feature): ol.Feature {
-    if (!this.RangeL) {
-      //layer of range/region
-      let rangStyle = new ol_style({ stroke: new ol_stroke({ width: 2, color: '#8ccf1c' }) })
-      this.RangeL = new ol_layer_vector({
-        source: new ol_source_vector(),
-        zIndex: 102,
-        style: () => [rangStyle]
-      });
-      this.AddLayer(this.RangeL);
-    }
+
     if (ps instanceof ol_feature) {
       this.RangeL.getSource().addFeature(ps);
       return ps;
@@ -301,19 +306,12 @@ export class OlMapService extends ObserverableWMediator {
     return this.Map.getEventCoordinate(e);
   }
 
-  public Helper(helper?: Object) {
-  }
-
-  public Change(data: Object): void {
-    throw new Error("Method not implemented.");
-  }
-
   /**
    * 设置地图中心点
    * @param point 
    */
-  public Focus(point: [number, number]) {
-    point = ol_proj.transform(point, this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg)
+  public Focus(point: [number, number], _sourceSrs?: string) {
+    point = ol_proj.transform(point, _sourceSrs || this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg)
     this.Map.getView().setCenter(point);
   }
 
@@ -389,14 +387,14 @@ export class OlMapService extends ObserverableWMediator {
       let bs = new ol_box_selection({
         condition: ol_events_condition.platformModifierKeyOnly,
       });
-      bs.on('boxend', e => {
-        let extent = bs.getGeometry().getExtent()
+      bs.on('boxend', () => {
+        let extent = bs.getGeometry().getExtent();
         layers.forEach(l => {
           l.getSource().forEachFeatureIntersectingExtent(extent, f => {
             if (fs.getArray().indexOf(f) == -1)
               fs.push(f);
-          })
-        })
+          });
+        });
         callback(fs.getArray());
       })
       this.AddInteraction(bs)
@@ -437,13 +435,6 @@ export class OlMapService extends ObserverableWMediator {
    */
   public Draw(type?: "Box" | "LineString" | "Circle" | "Polygon", callback?: (feature) => void, styles?: (f: ol.Feature) => ol.style.Style[]
     , features?: Array<ol.Feature>, id: string = "1", multi: boolean = false): ol.interaction.Interaction {
-    if (!this.DrawL) {
-      this.DrawL = new ol_layer_vector({
-        source: new ol_source_vector(),
-        zIndex: 105
-      });
-      this.AddLayer(this.DrawL);
-    }
     this.DrawL.setStyle((f: ol.Feature) => {
       if (styles) return styles(f)
       else {

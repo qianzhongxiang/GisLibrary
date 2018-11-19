@@ -164,9 +164,13 @@ export class DeviceService extends ObserverableWMediator {
     return this.Layer.getSource().getFeatureById(Id_TypeGenerator(id, type))
   }
   public UpdateTitle(id: string, type: string, title: string) {
-    let f = this.Layer.getSource().getFeatureById(Id_TypeGenerator(id, type))
-    if (!f) { LogHelper.Log("UpdateTitle：can not found feature with id:" + id); return; }
-    f.set("name", title);
+    const c = this.Obtain(id, type);
+    if (c) {
+      c.Title = title;
+      const f = this.Layer.getSource().getFeatureById(Id_TypeGenerator(id, type));
+      if (!f) { LogHelper.Log('UpdateTitle：can not found feature with id:' + id); return; }
+      f.set('name', title);
+    }
   }
   public Find(fn: (obj: GraphicOutInfo) => boolean): Array<GraphicOutInfo> {
     let res: Array<GraphicOutInfo> = []
@@ -196,13 +200,14 @@ export class DeviceService extends ObserverableWMediator {
       console.log("err:" + + " 在Coms中不存在");
     return this;
   }
+
   /**
    * to launch procession to process data from coordinate websocket which can be closed by invoke "ProcessClose" method
    * @param callback
    * @param posiConvertor coordinate convertor
    */
   public DataProcess(callback: (gif: GraphicOutInfo, type: DeviceStatus) => void
-    , posiConvertor?: (posi: [number, number]) => [number, number]): DeviceService {
+    , posiConvertor?: (posi: [number, number]) => [number, number], dataFilter?: (dataItem: DataItem) => boolean): DeviceService {
     let mapConfig = this.ConfigurationService.MapConfig;
     let type = mapConfig.locationConfig.wsType;
     let url = mapConfig.locationConfig.locationURI
@@ -213,7 +218,7 @@ export class DeviceService extends ObserverableWMediator {
         this.socket.Open(evt => {
           try {
             let datas = JSON.parse(evt.data);
-            this.Resolve(datas, callback, posiConvertor)
+            this.Resolve(datas, callback, posiConvertor, dataFilter);
           } catch (error) {
             LogHelper.Error(error)
           }
@@ -262,7 +267,7 @@ export class DeviceService extends ObserverableWMediator {
             let datas = JSON.parse(str);
             switch (topic) {
               case t:
-                this.Resolve([datas], callback, posiConvertor)
+                this.Resolve([datas], callback, posiConvertor, dataFilter)
                 break;
               case devMsg:
                 let array = datas as Array<MsgEntity>
@@ -270,7 +275,7 @@ export class DeviceService extends ObserverableWMediator {
                   let item = this.Obtain(i.Uid, i.DevType);
                   if (item) item.Offline = true;
                 })
-                this.SetState(this.Events.MsgChange, array)
+                this.SetState(this.Events.MsgChange, array);
                 break;
             }
           } catch (error) {
@@ -283,13 +288,14 @@ export class DeviceService extends ObserverableWMediator {
     return this;
   }
   /**
-   * 
+   * 设备位置初始化
    * @param items {id}_{type},{id}_{type}
-   * @param callback 
-   * @param posiConvertor 
+   * @param callback 回调
+   * @param posiConvertor 坐标转换
    */
   public DevPositionInit(items: string, callback: (gif: GraphicOutInfo, type: DeviceStatus) => void
     , posiConvertor?: (posi: [number, number]) => [number, number]) {
+    if (!this.ConfigurationService.MapConfig.webService) { return; }
     let url = this.ConfigurationService.MapConfig.webService + `/DeviceProfileGet?callback=?`
     this.Jsonp(url, { items: items }, (s) => {
       if (!s) return;
@@ -310,11 +316,11 @@ export class DeviceService extends ObserverableWMediator {
     return `${id}_${type}`;
   }
   public Resolve(datas: Array<DataItem>, callback: (gif: GraphicOutInfo, type: DeviceStatus, dataItem: DataItem) => void
-    , posiConvertor?: (posi: [number, number]) => [number, number]) {
-    for (var i = 0; i < datas.length; i++) {
-      let data: DataItem = datas[i], now = new Date();
-      if (data.X == 0 && data.Y == 0) continue;
-      let profile: GraphicOutInfo, type: DeviceStatus
+    , posiConvertor?: (posi: [number, number]) => [number, number], dataFilter?: (dataItem: DataItem) => boolean) {
+    for (let i = 0; i < datas.length; i++) {
+      const data: DataItem = datas[i], now = new Date();
+      if (data.X == 0 && data.Y == 0 || (dataFilter && !dataFilter(data))) { continue; }
+      let profile: GraphicOutInfo, type: DeviceStatus;
       let ps: [number, number] = [data.X, data.Y];
       // ps = ol_proj.transform(ps, GetProjByEPSG(0), 'EPSG:3857')// 'EPSG:4326'
       if (posiConvertor)
@@ -324,31 +330,32 @@ export class DeviceService extends ObserverableWMediator {
       if (!(profile = this.Obtain(data.UniqueId, data.Type))) {
         profile = {
           Type: data.Type, Id: data.UniqueId, Location: { x: ps[0], y: ps[1] }
-          , Parent: null
+          // 名称会在创建完后 由用户修改
           , Title: data.Name
+          , Parent: null
           , ReveiveTime: now
-        }
+        };
         this.Coms[Id_TypeGenerator(data.UniqueId, data.Type)] = profile;
         type = data.Offline ? DeviceStatus.NewOffline : DeviceStatus.New;
       } else {
         this.ComponentMove(data.UniqueId, data.Type, { x: ps[0], y: ps[1] });
-        if (profile.Offline && !data.Offline) type = DeviceStatus.Online;
-        else if (!profile.Offline && data.Offline) type = DeviceStatus.Offline;
-        else type = DeviceStatus.Move
+        if (profile.Offline && !data.Offline) { type = DeviceStatus.Online; } else
+          if (!profile.Offline && data.Offline) { type = DeviceStatus.Offline; } else { type = DeviceStatus.Move }
       }
       profile.Floor = data.Floor;
       profile.Duration = data.Duration;
       profile.ReveiveTime = now;
       profile.Time = data.CollectTime;
-      profile.Location = { x: ps[0], y: ps[1] }
+      profile.Location = { x: ps[0], y: ps[1] };
       profile.Offline = data.Offline;
       profile.Direction = data.Direction;
       callback(profile, type, data);
-      //callback 会为profile.subType 赋值
-      if (type == DeviceStatus.New || type == DeviceStatus.NewOffline)
+      // callback 会为profile.subType 赋值
+      if (type == DeviceStatus.New || type == DeviceStatus.NewOffline) {
         this.AddFeature(profile, true);
-      else
+      } else {
         this.AddFeature(profile);
+      }
 
       this.SetState(this.Events.DeviceUpdate, { data: profile, type: type })
       // if (type == DeviceStatus.New || type == DeviceStatus.NewOffline) {

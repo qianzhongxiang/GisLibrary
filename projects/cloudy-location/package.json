@@ -1,8 +1,20 @@
 {
   "name": "cloudy-location",
-  "version": "0.1.5",
+  "version": "1.0.4",
   "peerDependencies": {
-    "@angular/common": "^6.0.0-rc.0 || ^6.0.0",
-    "@angular/core": "^6.0.0-rc.0 || ^6.0.0"
+    "vincijs": "^1.0.39",
+    "ol-popup": "^3.0.0",
+    "ol": "^4.6.5",
+    "ol-contextmenu": "^3.2.0",
+    "jquery": "^3.3.1",
+    "mqtt": "^2.18.0",
+    "font-awesome": "^4.7.0",
+    "bootstrap": "^4.0.0",
+    "@angular/material": ">=6.2.1",
+    "@angular/cdk": ">=6.2.1"
+  },
+  "devDependencies": {
+    "@types/jquery": "^3.3.1",
+    "@types/ol": "^4.6.2"
   }
 }

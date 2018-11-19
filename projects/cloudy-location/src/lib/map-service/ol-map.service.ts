@@ -24,7 +24,7 @@ import olpopup from 'ol-popup'
 import overlay from 'ol/Overlay';
 import { olx } from 'openlayers';
 
-export type eventName = 'dblclick' | 'click' | 'pointermove'
+export type eventName = 'dblclick' | 'click' | 'pointermove' | 'movestart' | 'moveend'
 export type ViewEventName = 'change:resolution'
 @Injectable()
 export class OlMapService extends ObserverableWMediator {

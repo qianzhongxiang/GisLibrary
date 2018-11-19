@@ -136,15 +136,16 @@ export class DeviceService extends ObserverableWMediator {
   }
 
   /**
-   * outside api for add a kind of graphic 
+   * outside api for add a kind of graphic
    * @param type a kind of graphic
    * @param name name of graphic
    */
   public AddGraphic(type: typeof Composit, name: string) {
-    if (GetGraphicFactory().DefsContains(name))
-      GetGraphicFactory().SetDef(type, name)
-    else
+    if (GetGraphicFactory().DefsContains(name)) {
+      GetGraphicFactory().SetDef(type, name);
+    } else {
       GetGraphicFactory().SetComponent(type, name);
+    }
   }
   public GetLayer(): ol.layer.Vector {
     return this.Layer;

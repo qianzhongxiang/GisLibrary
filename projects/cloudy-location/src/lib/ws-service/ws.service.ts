@@ -45,7 +45,11 @@ class MqttService implements IMqttService {
     this.mqtt.on('error', callback);
     return this;
   }
-
+  /**
+   * qos be set to 1 by default
+   * @param topic
+   * @param callback
+   */
   Subscribe(topic: string | string[], callback: (payload: string) => void): IMqttService {
     if (typeof topic === 'string') {
       if (!this.callbacks[topic]) {
@@ -58,13 +62,11 @@ class MqttService implements IMqttService {
         } else { this.callbacks[t].push(callback); }
       });
     }
-    this.mqtt.subscribe(topic, (e) => { });
-    this.mqtt.on('connect', () => { });
-    this.mqtt.on('error', () => { });
+    this.mqtt.subscribe(topic, { qos: 1 }, (e) => { });
     return this;
   }
   constructor(url: string, user?: string, pd?: string) {
-    this.mqtt = mqtt.connect(url, { username: user, password: pd })
+    this.mqtt = mqtt.connect(url, { username: user, password: pd, })
       .on('message', (topic: string, payload: Buffer, packet: mqtt.Packet) => {
         const cds = this.callbacks[topic];
         if (cds) {

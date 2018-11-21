@@ -427,50 +427,73 @@ export class OlMapService extends ObserverableWMediator {
     })
   }
   /**
+   * add features into layer
+   * @param type layer type
+   * @param fs features which will be added
+   */
+  public AddFeatures(type: 'Draw' | 'Route' | 'Range', fs: ol.Feature[]) {
+    switch (type) {
+      case 'Draw':
+        this.DrawL.getSource().addFeatures(fs);
+        break;
+      case 'Route':
+        this.RouteL.getSource().addFeatures(fs);
+        break;
+      case 'Range':
+        this.RangeL.getSource().addFeatures(fs);
+        break;
+      default:
+        break;
+    }
+  }
+  /**
    * can add some features if have no type gaven
    * @param type {"Box","LineString","Circle","Polygon"}
    * @param callback 
-   * @param style if style is function, then it can style feature customly, but if style is an array ,then all feature will apply same styles
+   * @param style if style is function, then it can style feature customly,
+   * but if style is an array ,then all feature will apply same styles
    * @param id 
    */
-  public Draw(type?: "Box" | "LineString" | "Circle" | "Polygon", callback?: (feature) => void, styles?: (f: ol.Feature) => ol.style.Style[]
-    , features?: Array<ol.Feature>, id: string = "1", multi: boolean = false): ol.interaction.Interaction {
+  public Draw(type?: 'Box' | 'LineString' | 'Circle' | 'Polygon', callback?: (feature) => void, styles?: (f: ol.Feature) => ol.style.Style[]
+    , features?: Array<ol.Feature>, id: string = '1', multi: boolean = false): ol.interaction.Interaction {
     this.DrawL.setStyle((f: ol.Feature) => {
-      if (styles) return styles(f)
-      else {
+      if (styles) { return styles(f); } else {
         return [this.DefaultStyle];
       }
-    })
-    let source = this.DrawL.getSource();
-    if (features) source.addFeatures(features);
-    //drawing logic
-    let draw: ol.interaction.Draw
+    });
+    const source = this.DrawL.getSource();
+    if (features) { source.addFeatures(features); }
+    // drawing logic
+    let draw: ol.interaction.Draw;
     if (type) {
-      let interactions = this.Map.getInteractions()
-        , items = interactions.getArray().filter(i => i.get("levelId") == id);
-      if (items)
+      const interactions = this.Map.getInteractions()
+        , items = interactions.getArray().filter(i => i.get('levelId') == id);
+      if (items) {
         items.forEach(i => this.Map.removeInteraction(i));
-      let geometryFunction = undefined;
+      }
+      let geometryFunction;
       switch (type) {
-        case "Box":
+        case 'Box':
           geometryFunction = ol_draw.createBox();
-          type = "Circle";
+          type = 'Circle';
           break;
       }
       draw = new ol_draw({
         source: source,
         type: type as ol.geom.GeometryType,
         geometryFunction: geometryFunction
-      })
-      draw.set("levelId", id)
-      draw.on("drawend", (e: ol.interaction.Draw.Event) => {
-        let f = e.feature;
-        if (!multi)
-          this.Map.removeInteraction(draw)
-        if (callback)
+      });
+      draw.set('levelId', id);
+      draw.on('drawend', (e: ol.interaction.Draw.Event) => {
+        const f = e.feature;
+        if (!multi) {
+          this.Map.removeInteraction(draw);
+        }
+        if (callback) {
           callback(f);
-      })
-      this.Map.addInteraction(draw)
+        }
+      });
+      this.Map.addInteraction(draw);
     }
     return draw;
   }

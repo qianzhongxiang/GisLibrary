@@ -247,44 +247,42 @@ export class DeviceService extends ObserverableWMediator {
         }, () => {
         })
         break;
-      case "mqtt":
-        let t = mapConfig.locationConfig.mqttTopic,
+      case 'mqtt':
+        const t = mapConfig.locationConfig.mqttTopic,
           devMsg = 'devMsg'
           , user = mapConfig.mqttUser
           , pd = mapConfig.mqttPd
           , client = mqtt.connect(url, { username: user, password: pd })
-
-        client.on('connect', () => {
-          client.subscribe(t)
-          client.subscribe(devMsg)
-          // client.publish('presence', 'Hello mqtt')
-        })
-
         client.on('message', (topic, message) => {
           // message is Buffer
-          var str = message.toString()
+          const str = message.toString();
           // console.log(str)
           try {
-            let datas = JSON.parse(str);
+            const datas = JSON.parse(str);
             switch (topic) {
               case t:
                 this.Resolve([datas], callback, posiConvertor, dataFilter)
                 break;
               case devMsg:
-                let array = datas as Array<MsgEntity>
+                const array = datas as Array<MsgEntity>;
                 array.forEach(i => {
-                  let item = this.Obtain(i.Uid, i.DevType);
-                  if (item) item.Offline = true;
-                })
+                  const item = this.Obtain(i.Uid, i.DevType);
+                  if (item) { item.Offline = true; }
+                });
                 this.SetState(this.Events.MsgChange, array);
                 break;
             }
           } catch (error) {
-            LogHelper.Error(error)
+            LogHelper.Error(error);
           }
-        })
-        client.subscribe(t, { qos: 0 })
-        break
+        });
+        client.on('connect', () => {
+          client.subscribe(t);
+          client.subscribe(devMsg);
+          // client.publish('presence', 'Hello mqtt')
+        });
+
+        break;
     }
     return this;
   }

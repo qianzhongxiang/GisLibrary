@@ -66,6 +66,7 @@ export class OlMapService extends ObserverableWMediator {
       });
       this.AddLayer(this._drawl);
     }
+    this._drawl.setStyle(() => this.DefaultStyle);
     return this._drawl;
   }
 

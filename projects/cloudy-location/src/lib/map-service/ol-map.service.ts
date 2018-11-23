@@ -155,14 +155,15 @@ export class OlMapService extends ObserverableWMediator {
     this.Map.getInteractions().forEach(i => this.Map.removeInteraction(i));
   }
   public AddControl(control: ol.control.Control | ContextMenu_Super) {
-    if (control instanceof ContextMenu_Super)
+    if (control instanceof ContextMenu_Super) {
       control.SetMap(this.Map);
-    else // if (control instanceof ol.control.Control)
+    } else { // if (control instanceof ol.control.Control)
       this.Map.addControl(control);
+    }
   }
 
   public ViewOn(eventName: ViewEventName | ViewEventName[], fn: (evt: ol.events.Event) => void) {
-    this.Map.getView().on(eventName, fn)
+    this.Map.getView().on(eventName, fn);
   }
   /**
    * 订阅Map事件
@@ -306,6 +307,7 @@ export class OlMapService extends ObserverableWMediator {
     return this.Map.getEventCoordinate(e);
   }
 
+
   /**
    * 设置地图中心点
    * @param point 
@@ -447,6 +449,61 @@ export class OlMapService extends ObserverableWMediator {
     }
   }
   /**
+   * 
+   * @param type 
+   * @param fs 
+   */
+  public RemoveFeatures(type: 'Draw' | 'Route' | 'Range', fs: ol.Feature[]) {
+    switch (type) {
+      case 'Draw':
+        fs.forEach(f => this.DrawL.getSource().removeFeature(f));
+        break;
+      case 'Route':
+        fs.forEach(f => this.RouteL.getSource().removeFeature(f));
+        break;
+      case 'Range':
+        fs.forEach(f => this.RangeL.getSource().removeFeature(f));
+        break;
+      default:
+        break;
+    }
+  }
+  /**
+   * 
+   * @param type 
+   */
+  public GetFeatures(type: 'Draw' | 'Route' | 'Range'): ol.Feature[] {
+    switch (type) {
+      case 'Draw':
+        return this.DrawL.getSource().getFeatures();
+      case 'Route':
+        return this.DrawL.getSource().getFeatures();
+      case 'Range':
+        return this.DrawL.getSource().getFeatures();
+      default:
+        break;
+    }
+  }
+  /**
+   * 
+   * @param type 
+   */
+  public LayerClear(type: 'Draw' | 'Route' | 'Range') {
+    switch (type) {
+      case 'Draw':
+        this.DrawL.getSource().clear();
+        break;
+      case 'Route':
+        this.DrawL.getSource().clear();
+        break;
+      case 'Range':
+        this.DrawL.getSource().clear();
+        break;
+      default:
+        break;
+    }
+  }
+  /**
    * can add some features if have no type gaven
    * @param type {"Box","LineString","Circle","Polygon"}
    * @param callback 
@@ -499,24 +556,25 @@ export class OlMapService extends ObserverableWMediator {
   }
 
   /**
-   * 
+   * CreateFeature method can help to create ol.feature;
    * @param type "LineString" | "Circle" | "Polygon"
-   * @param points 
+   * @param points locations
    */
-  public CreateFeature(type: "LineString" | "Circle" | "Polygon", points: [number, number][]): ol.Feature {
-    let geom: ol.geom.Geometry
-    //epsg transform
-    points = points.map(p => ol_proj.transform(p, this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg))
+  public CreateFeature(type: 'LineString' | 'Circle' | 'Polygon', points: [number, number][]): ol.Feature {
+    let geom: ol.geom.Geometry;
+    // epsg transform
+    points = points.map(p => ol_proj.transform(p, this.ConfigurationService.MapConfig.srs
+      , this.ConfigurationService.MapConfig.frontEndEpsg));
     switch (type.toLowerCase()) {
-      case "linestring":
-        geom = new ol_lineString(points)
+      case 'linestring':
+        geom = new ol_lineString(points);
         break;
-      case "circle":
+      case 'circle':
         geom = new ol_circle(points[0], new ol_lineString(points).getLength());
-        break
-      case "polygon":
-        geom = new ol_polygon([points])
-        break
+        break;
+      case 'polygon':
+        geom = new ol_polygon([points]);
+        break;
     }
     return new ol_feature(geom);
   }

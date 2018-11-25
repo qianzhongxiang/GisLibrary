@@ -15,25 +15,25 @@ import ol_feature from 'ol/feature';
 import ol_polygon from 'ol/geom/Polygon';
 import ol_lineString from 'ol/geom/LineString';
 import ol_circle from 'ol/geom/Circle';
-import ol_draw from 'ol/interaction/Draw'
+import ol_draw from 'ol/interaction/Draw';
 import ol_select from 'ol/interaction/Select';
 import ol_PostionControl from 'ol/control/mouseposition';
-import ol_box_selection from 'ol/interaction/DragBox'
-import ol_events_condition from 'ol/events/condition'
-import olpopup from 'ol-popup'
+import ol_box_selection from 'ol/interaction/DragBox';
+import ol_events_condition from 'ol/events/condition';
+import olpopup from 'ol-popup';
 import overlay from 'ol/Overlay';
 import { olx } from 'openlayers';
 
-export type eventName = 'dblclick' | 'click' | 'pointermove' | 'movestart' | 'moveend'
-export type ViewEventName = 'change:resolution'
+export type eventName = 'dblclick' | 'click' | 'pointermove' | 'movestart' | 'moveend';
+export type ViewEventName = 'change:resolution';
 @Injectable()
 export class OlMapService extends ObserverableWMediator {
-  public Events = { FloorChanged: "FloorChanged" }
-  private _routel: ol.layer.Vector
+  public Events = { FloorChanged: 'FloorChanged' };
+  private _routel: ol.layer.Vector;
   private get RouteL(): ol.layer.Vector {
     if (!this._routel) {
-      //layer of route
-      let style = new ol_style({ stroke: new ol_stroke({ width: 6, color: "#04cf87" }) })
+      // layer of route
+      const style = new ol_style({ stroke: new ol_stroke({ width: 6, color: '#04cf87' }) });
       this._routel = new ol_layer_vector({
         source: new ol_source_vector(),
         zIndex: 103,
@@ -43,11 +43,11 @@ export class OlMapService extends ObserverableWMediator {
     }
     return this._routel;
   }
-  private _rangel: ol.layer.Vector
+  private _rangel: ol.layer.Vector;
   private get RangeL(): ol.layer.Vector {
     if (!this._rangel) {
-      //layer of range/region
-      let rangStyle = new ol_style({ stroke: new ol_stroke({ width: 2, color: '#8ccf1c' }) })
+      // layer of range/region
+      const rangStyle = new ol_style({ stroke: new ol_stroke({ width: 2, color: '#8ccf1c' }) });
       this._rangel = new ol_layer_vector({
         source: new ol_source_vector(),
         zIndex: 102,
@@ -57,36 +57,36 @@ export class OlMapService extends ObserverableWMediator {
     }
     return this._rangel;
   }
-  private _drawl: ol.layer.Vector
+  private _drawl: ol.layer.Vector;
   private get DrawL(): ol.layer.Vector {
     if (!this._drawl) {
       this._drawl = new ol_layer_vector({
         source: new ol_source_vector(),
-        zIndex: 105
+        zIndex: 105,
+        style: () => [this.DefaultStyle]
       });
       this.AddLayer(this._drawl);
     }
-    this._drawl.setStyle(() => this.DefaultStyle);
     return this._drawl;
   }
 
-  private DefaultStyle = new ol_style({ stroke: new ol_stroke({ width: 2, color: '#8ccf1c' }) })
+  private DefaultStyle = new ol_style({ stroke: new ol_stroke({ width: 2, color: '#8ccf1c' }) });
   /**
    * 获取矢量图层
    * @param type "route|range|draw"
    */
   public GetVectorLayer(type: string): ol.layer.Vector {
     switch (type) {
-      case "route":
+      case 'route':
         return this.RouteL;
-      case "range":
+      case 'range':
         return this.RangeL;
-      case "draw":
+      case 'draw':
         return this.DrawL;
     }
   }
   constructor(private ConfigurationService: ConfigurationService, private FloorService: FloorService) {
-    super()
+    super();
     // init options of floor service
     let mapConfig = this.ConfigurationService.MapConfig
     this.FloorService.SetOptions({
@@ -557,14 +557,14 @@ export class OlMapService extends ObserverableWMediator {
   }
 
   /**
-   * CreateFeature method can help to create ol.feature;
+   * CreateFeature method can help to create ol.feature; points will be converted by default; but can change it manuely;
    * @param type "LineString" | "Circle" | "Polygon"
    * @param points locations
    */
-  public CreateFeature(type: 'LineString' | 'Circle' | 'Polygon', points: [number, number][]): ol.Feature {
+  public CreateFeature(type: 'LineString' | 'Circle' | 'Polygon', points: [number, number][], sourceSrs?: string): ol.Feature {
     let geom: ol.geom.Geometry;
     // epsg transform
-    points = points.map(p => ol_proj.transform(p, this.ConfigurationService.MapConfig.srs
+    points = points.map(p => ol_proj.transform(p, sourceSrs || this.ConfigurationService.MapConfig.srs
       , this.ConfigurationService.MapConfig.frontEndEpsg));
     switch (type.toLowerCase()) {
       case 'linestring':

@@ -158,6 +158,11 @@ export class DeviceService extends ObserverableWMediator {
   public Obtain(id: string, type: string): GraphicOutInfo {
     return this.Coms[Id_TypeGenerator(id, type)];
   }
+  /**
+   * get coordinates of this feature in front end srs, by default EPSG3857
+   * @param id  id of feature
+   * @param type is type of feature
+   */
   public GetPosition(id: string, type: string): [number, number] {
     return (this.Layer.getSource().getFeatureById(Id_TypeGenerator(id, type)).getGeometry() as ol.geom.Point).getCoordinates();
   }

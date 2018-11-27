@@ -6,6 +6,7 @@ export function GetProjByEPSG(epsg: EPSG): string {
     return EPSGList[epsg];
 }
 
-export function ProjectionTransform(point: [number, number], sourceProject: EPSG, targetProject: EPSG): [number, number] {
-    return ol_proj.transform(point, GetProjByEPSG(sourceProject), GetProjByEPSG(targetProject));
+export function ProjectionTransform(point: [number, number], sourceProject: EPSG | string, targetProject: EPSG | string): [number, number] {
+    return ol_proj.transform(point, typeof sourceProject === 'string' ? sourceProject : GetProjByEPSG(sourceProject)
+        , typeof targetProject === 'string' ? targetProject : GetProjByEPSG(targetProject));
 }

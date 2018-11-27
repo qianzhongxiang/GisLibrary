@@ -312,6 +312,7 @@ export class OlMapService extends ObserverableWMediator {
   /**
    * 设置地图中心点
    * @param point 
+   * @param _sourceSrs is srs of point, by default is srs be setted by configuration file;
    */
   public Focus(point: [number, number], _sourceSrs?: string) {
     point = ol_proj.transform(point, _sourceSrs || this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg)

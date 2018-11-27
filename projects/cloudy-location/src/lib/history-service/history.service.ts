@@ -48,25 +48,38 @@ export class HistoryService {
   }
   /**
    * 获取历史数据 通过jsonp or access control
-   * @param uid 
-   * @param type 
-   * @param sTime 
-   * @param eTime 
-   * @param callback 
+   * @param uid
+   * @param type
+   * @param sTime
+   * @param eTime
+   * @param callback
+   * @param corsType
+   * @param noInterval   dataItem 是否有Interval属性
    */
   public GetData(datas: Array<{ uid: string, type: string, sTime: string, eTime: string }>,
-    callback?: (data: Array<DataItem>) => void, corsType: 'AccessControl' | 'jsonp' = 'jsonp') {
+    callback?: (data: Array<DataItem>) => void, corsType: 'AccessControl' | 'jsonp' = 'jsonp', noInterval: boolean = false) {
     this.Clean();
     const url = this.configurationService.MapConfig.webService + `/HistoryGet`
       , index = 1, count = 200;
-    let dataIndex = 0;
+    let dataIndex = 0, beginTime: Date;
 
     // let postdata = { uid: uid, type: type, stime: sTime.toISOString(), etime: eTime.toISOString(), index: 1, count: 200 };
     let postdata = Object.assign(datas[dataIndex], { index: index, count: count, interval: 15 });
     // { uid: "352544071943238", type: "SF", stime: sTime.toISOString(), etime: eTime.toISOString(), index: 1, count: 200 };
     const cb = ((ds: string | Array<DataItem>) => {
       if (typeof ds === 'string') { ds = JSON.parse(ds) as Array<DataItem>; }
-      const oneMinData = ds.filter(d => d.CustomInterval == 60);
+      let oneMinData: DataItem[];
+      if (noInterval) {
+        oneMinData = ds.filter(d => {
+          const t = new Date(d.SendTime);
+          if (!beginTime || t.getTime() >= (beginTime.getTime() + 60000)) {
+            beginTime = t;
+            return true;
+          }
+        });
+      } else {
+        oneMinData = ds.filter(d => d.CustomInterval === 60);
+      }
       this.Data = this.Data.concat(oneMinData);
       if (callback) { callback(oneMinData); }
       this.callbacks.forEach(c => c(oneMinData));

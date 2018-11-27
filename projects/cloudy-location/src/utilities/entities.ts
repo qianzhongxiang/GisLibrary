@@ -5,7 +5,8 @@ export interface DataItem {
     Y: number
     EPSG: number
     Type: string
-    CollectTime: string
+    CollectTime: string;
+    SendTime: string;
     Name: string
     UniqueId: string
     Duration: number

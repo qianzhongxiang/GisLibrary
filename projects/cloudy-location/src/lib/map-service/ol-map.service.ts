@@ -88,7 +88,7 @@ export class OlMapService extends ObserverableWMediator {
   constructor(private ConfigurationService: ConfigurationService, private FloorService: FloorService) {
     super();
     // init options of floor service
-    let mapConfig = this.ConfigurationService.MapConfig
+    let mapConfig = this.ConfigurationService.MapConfig;
     this.FloorService.SetOptions({
       layerOptions: {
         hostName: mapConfig.geoServerUrl
@@ -97,12 +97,12 @@ export class OlMapService extends ObserverableWMediator {
         , origins: mapConfig.origins
       }
       , floors: (mapConfig.layers instanceof Array ? mapConfig.layers : [mapConfig.layers])
-    })
+    });
     //listening to changing of floor, and call setFloor
-    this.FloorService.Bind(this.FloorService.Events.Changed, () => this.SetFloor())
+    this.FloorService.Bind(this.FloorService.Events.Changed, () => this.SetFloor());
   }
 
-  private Map: ol.Map
+  private Map: ol.Map;
   public Show(data: { target: HTMLElement }) {
     this.EnvironmentConfig(data.target);
   }
@@ -112,10 +112,10 @@ export class OlMapService extends ObserverableWMediator {
   public SetFloor() {
     //remove all layer even though drawing layer
     [...this.Map.getLayers().getArray()]
-      .forEach(l => this.Map.removeLayer(l))
+      .forEach(l => this.Map.removeLayer(l));
     //add layers from new floor
     this.InitLayers();
-    this.SetState(this.Events.FloorChanged)
+    this.SetState(this.Events.FloorChanged);
   }
   /**
    * add layer for map view, call "AddLayer()" after Event.FloorChanged if floorSwitcher is setted by true
@@ -124,10 +124,12 @@ export class OlMapService extends ObserverableWMediator {
    */
   public AddLayer(layer: ol.layer.Layer, forPerFloor?: boolean) {
     this.addLayer(layer);
-    if (forPerFloor)
-      this.FloorService.AddLayers([layer], false)
-    else
-      this.FloorService.AddLayers([layer])
+    if (forPerFloor) {
+      this.FloorService.AddLayers([layer], false);
+    }
+    else {
+      this.FloorService.AddLayers([layer]);
+    }
   }
   /**
    * 内部 添加图层方法
@@ -174,16 +176,16 @@ export class OlMapService extends ObserverableWMediator {
    */
   public MapOn(eventName: eventName | eventName[], fn: (evt: ol.events.Event, pixel: [number, number], feature?: ol.Feature) => void, indicateFeature: boolean = false) {
     this.Map.on(eventName, (evt) => {
-      let pixel: [number, number], feature: ol.Feature
+      let pixel: [number, number], feature: ol.Feature;
       switch (evt.type) {
         case 'pointermove':
-          pixel = this.Map.getEventPixel(evt["originalEvent"])
+          pixel = this.Map.getEventPixel(evt['originalEvent']);
           break;
         case 'click':
-          pixel = evt["pixel"]
+          pixel = evt['pixel'];
           break;
         case 'dblclick':
-          pixel = evt["pixel"]
+          pixel = evt['pixel'];
           break;
         default:
           break;
@@ -203,15 +205,15 @@ export class OlMapService extends ObserverableWMediator {
    * @param element 
    */
   private EnvironmentConfig(element: HTMLElement) {
-    let mapConfig = this.ConfigurationService.MapConfig
-    let control = new ol_PostionControl({ target: document.createElement("div"), projection: "EPSG:3857" });
+    let mapConfig = this.ConfigurationService.MapConfig;
+    let control = new ol_PostionControl({ target: document.createElement('div'), projection: 'EPSG:3857' });
 
     let vo: olx.ViewOptions =// { zoom: 4, center: [0, 0] }
     {
       center: ol_proj.transform(mapConfig.centerPoint as [number, number], mapConfig.centerSrs, mapConfig.frontEndEpsg), zoom: mapConfig.zoom,
       zoomFactor: mapConfig.zoomfactor, minResolution: mapConfig.minResolution, maxResolution: mapConfig.maxResolution,
       resolutions: mapConfig.resolutions
-    }
+    };
     if (mapConfig.zoomrange) {
       vo.minZoom = mapConfig.zoomrange[0];
       vo.maxZoom = mapConfig.zoomrange[1];
@@ -248,11 +250,12 @@ export class OlMapService extends ObserverableWMediator {
     let s = new ol_select({
       layers: [layer]
     });
-    s.on("select", (e: ol.interaction.Select.Event) => {
+    s.on('select', (e: ol.interaction.Select.Event) => {
       let f = e.selected[0];
-      if (f)
+      if (f) {
         popup.show((f.getGeometry() as ol.geom.Point).getCoordinates(), callback(e.selected[0]));
-    })
+      }
+    });
     this.Map.addInteraction(s);
 
     // this.Map.on('singleclick', (e: ol.events.Event) => {
@@ -262,26 +265,27 @@ export class OlMapService extends ObserverableWMediator {
   public DrawRoute(route: string | Array<{ X: number, Y: number }> | ol.Feature, styleOptions?: { width?: number, color?: string }): ol.Feature {
 
     if (styleOptions) {
-      styleOptions = Object.assign({ width: 6, color: "#04cf87" }, styleOptions)
-      this.RouteL.setStyle(() => [new ol_style({ stroke: new ol_stroke({ width: styleOptions.width, color: styleOptions.color }) })])
+      styleOptions = Object.assign({ width: 6, color: '#04cf87' }, styleOptions);
+      this.RouteL.setStyle(() => [new ol_style({ stroke: new ol_stroke({ width: styleOptions.width, color: styleOptions.color }) })]);
     }
     if (route instanceof ol_feature) {
       this.RouteL.getSource().addFeature(route);
       return route;
     }
     let points: Array<{ X: number, Y: number }>;
-    if (typeof route === 'string') points = JSON.parse(route);
-    else
+    if (typeof route === 'string') { points = JSON.parse(route); }
+    else {
       points = route;
+    }
     if (points) {
       let pointArray: Array<[number, number]> = [];
       points.forEach(p => {
         pointArray.push(ol_proj.transform([p.X, p.Y], this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg));
       });
-      let feature = new ol_feature(new ol_lineString(pointArray))
+      let feature = new ol_feature(new ol_lineString(pointArray));
       this.RouteL.getSource().addFeature(feature);
       return feature;
-    } else LogHelper.Error("DrawRoute():route is invalid")
+    } else { LogHelper.Error('DrawRoute():route is invalid'); }
   }
   /**
    * 画区域
@@ -297,11 +301,11 @@ export class OlMapService extends ObserverableWMediator {
     if (ps) {
       let source = this.RangeL.getSource();
       let a: Array<[number, number]> = [];
-      ps.forEach(p => a.push(ol_proj.transform([p.X, p.Y], this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg)))
-      let feature = new ol_feature(new ol_polygon([a]))
+      ps.forEach(p => a.push(ol_proj.transform([p.X, p.Y], this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg)));
+      let feature = new ol_feature(new ol_polygon([a]));
       source.addFeature(feature);
       return feature;
-    } else LogHelper.Error(`DrawRange():ps is null`)
+    } else { LogHelper.Error(`DrawRange():ps is null`); }
   }
 
   public GetCoordinate(e: Event): [number, number] {
@@ -315,12 +319,12 @@ export class OlMapService extends ObserverableWMediator {
    * @param _sourceSrs is srs of point, by default is srs be setted by configuration file;
    */
   public Focus(point: [number, number], _sourceSrs?: string) {
-    point = ol_proj.transform(point, _sourceSrs || this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg)
+    point = ol_proj.transform(point, _sourceSrs || this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg);
     this.Map.getView().setCenter(point);
   }
 
   public Render() {
-    this.Map.render()
+    this.Map.render();
   }
   /**
    * 刷新特定图层
@@ -336,32 +340,34 @@ export class OlMapService extends ObserverableWMediator {
    * @param layer optional 
    */
   public RemoveDrawFeature(feature: ol.Feature, layer?: ol.layer.Vector) {
-    if (!layer) layer = this.DrawL;
-    if (!layer) return;
+    if (!layer) { layer = this.DrawL; }
+    if (!layer) { return; }
     layer.getSource().removeFeature(feature);
   }
   /**
-   * use return select to get all feature
+   * use return select to get all feature; 选择一个图元之后，features为1，再次选择则为0
    * @param callback just get last selected feature
-   * @param id 
+   * @param id
+   * @param multi
    */
-  public SelectDraw(callback: (features: Array<ol.Feature>) => void, id: string = "1"): ol.interaction.Select {
+  public SelectDraw(callback: (features: Array<ol.Feature>) => void, id: string = '1', multi: boolean = true): ol.interaction.Select {
     // if (!this.DrawL) return;
-    let interactions = this.Map.getInteractions()
-      , items = interactions.getArray().filter(i => i.get("levelId") == id);
-    if (items)
+    const interactions = this.Map.getInteractions()
+      , items = interactions.getArray().filter(i => i.get('levelId') == id);
+    if (items) {
       items.forEach(i => this.Map.removeInteraction(i));
-    let s = new ol_select({
+    }
+    const s = new ol_select({
       layers: [this.DrawL],
       addCondition: ol_events_condition.click,
       removeCondition: ol_events_condition.click,
       condition: ol_events_condition.click,
-      multi: true
+      multi: multi
     });
-    s.on("select", (e: ol.interaction.Select.Event) => {
+    s.on('select', (e: ol.interaction.Select.Event) => {
       callback(e.selected);
-    })
-    this.Map.addInteraction(s)
+    });
+    this.Map.addInteraction(s);
     return s;
   }
   /**
@@ -374,18 +380,18 @@ export class OlMapService extends ObserverableWMediator {
     let options: any = {
       layers: layers,
       multi: multi
-    }
+    };
     if (multi) {
-      options.addCondition = ol_events_condition.click
-      options.removeCondition = ol_events_condition.click
-      options.condition = ol_events_condition.click
+      options.addCondition = ol_events_condition.click;
+      options.removeCondition = ol_events_condition.click;
+      options.condition = ol_events_condition.click;
     }
 
     let s = new ol_select(options);
-    s.on("select", (e: ol.interaction.Select.Event) => {
+    s.on('select', (e: ol.interaction.Select.Event) => {
       callback(e.selected);
-    })
-    this.AddInteraction(s)
+    });
+    this.AddInteraction(s);
     if (boxSelection) {
       let fs = s.getFeatures();
       let bs = new ol_box_selection({
@@ -395,13 +401,14 @@ export class OlMapService extends ObserverableWMediator {
         let extent = bs.getGeometry().getExtent();
         layers.forEach(l => {
           l.getSource().forEachFeatureIntersectingExtent(extent, f => {
-            if (fs.getArray().indexOf(f) == -1)
+            if (fs.getArray().indexOf(f) == -1) {
               fs.push(f);
+            }
           });
         });
         callback(fs.getArray());
-      })
-      this.AddInteraction(bs)
+      });
+      this.AddInteraction(bs);
     }
     return s;
   }
@@ -415,20 +422,21 @@ export class OlMapService extends ObserverableWMediator {
    * @param viewPramaters 
    */
   public LoadWfs(callback: (layer: ol.layer.Vector) => void, gisServer: string, typeName: string, outputFormat: string = 'application/json', viewPramaters?: string) {
-    let pams = `service=wfs&version=1.1.0&request=GetFeature&typeNames=${typeName}&outputFormat=${outputFormat}&${viewPramaters}`
+    let pams = `service=wfs&version=1.1.0&request=GetFeature&typeNames=${typeName}&outputFormat=${outputFormat}&${viewPramaters}`;
     new Ajax({ url: `${gisServer}/wfs?${pams}` }).done(json => {
       let fs = new olFormatGeoJson().readFeatures(json);
       if (fs && fs.length > 0) {
         let layer = new ol_layer_vector({
           source: new ol_source_vector(),
           zIndex: 104,
-          style: () => [new ol_style({ stroke: new ol_stroke({ width: 6, color: "#04cf87" }) })]
+          style: () => [new ol_style({ stroke: new ol_stroke({ width: 6, color: '#04cf87' }) })]
         });
         layer.getSource().addFeatures(fs);
-        if (callback)
+        if (callback) {
           callback(layer);
+        }
       }
-    })
+    });
   }
   /**
    * add features into layer

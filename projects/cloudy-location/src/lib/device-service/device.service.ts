@@ -135,6 +135,12 @@ export class DeviceService extends ObserverableWMediator {
     } else if (f = this.VectorSource.getFeatureById(idtype)) { this.VectorSource.removeFeature(f); }
   }
 
+  public RemoveFeature(id: string, type: string) {
+    const f = this.GetFeature(id, type);
+    if (f) {
+      this.Layer.getSource().removeFeature(f);
+    }
+  }
   /**
    * outside api for add a kind of graphic
    * @param type a kind of graphic

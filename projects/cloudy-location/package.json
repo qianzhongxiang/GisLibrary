@@ -1,11 +1,12 @@
 {
   "name": "cloudy-location",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "peerDependencies": {
     "vincijs": "^1.0.39",
     "ol-popup": "^3.0.0",
     "ol": "^4.6.5",
     "ol-contextmenu": "^3.2.0",
+    "ol-layerswitcher": "^3.2.0",
     "jquery": "^3.3.1",
     "mqtt": "^2.18.0",
     "font-awesome": "^4.7.0",

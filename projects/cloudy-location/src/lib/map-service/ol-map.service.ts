@@ -7,6 +7,7 @@ import olFormatGeoJson from 'ol/format/GeoJson';
 import ol_Map from 'ol/map';
 import ol_style from 'ol/style/Style';
 import ol_stroke from 'ol/style/Stroke';
+import ol_fill from 'ol/style/Fill';
 import ol_layer_vector from 'ol/layer/Vector';
 import ol_source_vector from 'ol/source/Vector';
 import ol_View from 'ol/view';
@@ -26,10 +27,12 @@ import { olx } from 'openlayers';
 
 export type eventName = 'dblclick' | 'click' | 'pointermove' | 'movestart' | 'moveend';
 export type ViewEventName = 'change:resolution';
+export type LayerType = 'Draw' | 'Route' | 'Range';
 @Injectable()
 export class OlMapService extends ObserverableWMediator {
   public Events = { FloorChanged: 'FloorChanged' };
   private _routel: ol.layer.Vector;
+  public Map: ol.Map;
   private get RouteL(): ol.layer.Vector {
     if (!this._routel) {
       // layer of route
@@ -51,12 +54,17 @@ export class OlMapService extends ObserverableWMediator {
       this._rangel = new ol_layer_vector({
         source: new ol_source_vector(),
         zIndex: 102,
-        style: () => [rangStyle]
+        style: () => {
+          return [rangStyle];
+        }
       });
       this.AddLayer(this._rangel);
     }
     return this._rangel;
   }
+
+
+
   private _drawl: ol.layer.Vector;
   private get DrawL(): ol.layer.Vector {
     if (!this._drawl) {
@@ -75,8 +83,8 @@ export class OlMapService extends ObserverableWMediator {
    * 获取矢量图层
    * @param type "route|range|draw"
    */
-  public GetVectorLayer(type: string): ol.layer.Vector {
-    switch (type) {
+  public GetVectorLayer(type: LayerType): ol.layer.Vector {
+    switch (type.toLowerCase()) {
       case 'route':
         return this.RouteL;
       case 'range':
@@ -101,8 +109,42 @@ export class OlMapService extends ObserverableWMediator {
     //listening to changing of floor, and call setFloor
     this.FloorService.Bind(this.FloorService.Events.Changed, () => this.SetFloor());
   }
+  public Rotate(rotation: number, opt_anchor?: ol.Coordinate) {
+    this.Map.getView().rotate(rotation, opt_anchor);
+  }
 
-  private Map: ol.Map;
+  public SetStyle(type: LayerType,
+    styleFn: (feature: ol.Feature, resolution: number) => (ol.style.Style | ol.style.Style[])) {
+    switch (type.toLowerCase()) {
+      case 'route':
+        this.RouteL.setStyle(styleFn);
+        break;
+      case 'range':
+        this.RangeL.setStyle(styleFn);
+        break;
+      case 'draw':
+        this.DrawL.setStyle(styleFn);
+        break;
+    }
+  }
+
+  public GetStyle(options: {
+    stroke?: olx.style.StrokeOptions, zIndex?: number,
+    fill?: olx.style.FillOptions
+  }): ol.style.Style {
+
+    const style = new ol_style();
+    if (options.stroke) {
+      style.setStroke(new ol_stroke(options.stroke));
+    }
+    if (options.fill) {
+      style.setFill(new ol_fill(options.fill));
+    }
+    if (options.zIndex) {
+      style.setZIndex(options.zIndex);
+    }
+    return style;
+  }
   public Show(data: { target: HTMLElement }) {
     this.EnvironmentConfig(data.target);
   }
@@ -134,7 +176,7 @@ export class OlMapService extends ObserverableWMediator {
   /**
    * 内部 添加图层方法
    */
-  private addLayer(layer: ol.layer.Layer) {
+  private addLayer(layer: ol.layer.Layer | ol.layer.Group) {
     this.Map.addLayer(layer);
   }
   public RemoveLayer(layer) {
@@ -299,10 +341,11 @@ export class OlMapService extends ObserverableWMediator {
       return ps;
     }
     if (ps) {
-      let source = this.RangeL.getSource();
-      let a: Array<[number, number]> = [];
-      ps.forEach(p => a.push(ol_proj.transform([p.X, p.Y], this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg)));
-      let feature = new ol_feature(new ol_polygon([a]));
+      const source = this.RangeL.getSource();
+      const a: Array<[number, number]> = [];
+      ps.forEach(p => a.push(ol_proj.transform([p.X, p.Y]
+        , this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg)));
+      const feature = new ol_feature(new ol_polygon([a]));
       source.addFeature(feature);
       return feature;
     } else { LogHelper.Error(`DrawRange():ps is null`); }
@@ -319,7 +362,8 @@ export class OlMapService extends ObserverableWMediator {
    * @param _sourceSrs is srs of point, by default is srs be setted by configuration file;
    */
   public Focus(point: [number, number], _sourceSrs?: string) {
-    point = ol_proj.transform(point, _sourceSrs || this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg);
+    point = ol_proj.transform(point, _sourceSrs || this.ConfigurationService.MapConfig.srs
+      , this.ConfigurationService.MapConfig.frontEndEpsg);
     this.Map.getView().setCenter(point);
   }
 
@@ -331,7 +375,7 @@ export class OlMapService extends ObserverableWMediator {
    * @param layer 
    */
   public Refresh(layer?: ol.layer.Layer) {
-    //TODO refresh all layer in map
+    // TODO refresh all layer in map
     layer.getSource().refresh();
   }
   /**
@@ -361,9 +405,10 @@ export class OlMapService extends ObserverableWMediator {
       layers: [this.DrawL],
       addCondition: ol_events_condition.click,
       removeCondition: ol_events_condition.click,
-      condition: ol_events_condition.click,
+      condition: multi ? ol_events_condition.click : ol_events_condition.singleClick,
       multi: multi
     });
+    s.set('levelId', id);
     s.on('select', (e: ol.interaction.Select.Event) => {
       callback(e.selected);
     });
@@ -443,7 +488,7 @@ export class OlMapService extends ObserverableWMediator {
    * @param type layer type
    * @param fs features which will be added
    */
-  public AddFeatures(type: 'Draw' | 'Route' | 'Range', fs: ol.Feature[]) {
+  public AddFeatures(type: LayerType, fs: ol.Feature[]) {
     switch (type) {
       case 'Draw':
         this.DrawL.getSource().addFeatures(fs);
@@ -463,7 +508,7 @@ export class OlMapService extends ObserverableWMediator {
    * @param type 
    * @param fs 
    */
-  public RemoveFeatures(type: 'Draw' | 'Route' | 'Range', fs: ol.Feature[]) {
+  public RemoveFeatures(type: LayerType, fs: ol.Feature[]) {
     switch (type) {
       case 'Draw':
         fs.forEach(f => this.DrawL.getSource().removeFeature(f));
@@ -482,7 +527,7 @@ export class OlMapService extends ObserverableWMediator {
    * 
    * @param type 
    */
-  public GetFeatures(type: 'Draw' | 'Route' | 'Range'): ol.Feature[] {
+  public GetFeatures(type: LayerType): ol.Feature[] {
     switch (type) {
       case 'Draw':
         return this.DrawL.getSource().getFeatures();
@@ -498,16 +543,16 @@ export class OlMapService extends ObserverableWMediator {
    * 
    * @param type 
    */
-  public LayerClear(type: 'Draw' | 'Route' | 'Range') {
+  public LayerClear(type: LayerType) {
     switch (type) {
       case 'Draw':
         this.DrawL.getSource().clear();
         break;
       case 'Route':
-        this.DrawL.getSource().clear();
+        this.RouteL.getSource().clear();
         break;
       case 'Range':
-        this.DrawL.getSource().clear();
+        this.RangeL.getSource().clear();
         break;
       default:
         break;
@@ -569,6 +614,7 @@ export class OlMapService extends ObserverableWMediator {
    * CreateFeature method can help to create ol.feature; points will be converted by default; but can change it manuely;
    * @param type "LineString" | "Circle" | "Polygon"
    * @param points locations
+   * @param sourceSrs optionial  MapConfig.srs
    */
   public CreateFeature(type: 'LineString' | 'Circle' | 'Polygon', points: [number, number][], sourceSrs?: string): ol.Feature {
     let geom: ol.geom.Geometry;

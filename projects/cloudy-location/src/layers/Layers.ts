@@ -1,6 +1,10 @@
+export enum MapWebServiceType {
+    WMS,
+    WFS
+}
 export interface LayerOptions {
-    hostName: string;
-    groupName: string;
+    hostName?: string;
+    groupName?: string;
     GWC?: boolean;
     maxResolution?: number;
     minResolution?: number;
@@ -8,6 +12,10 @@ export interface LayerOptions {
     extent?: [number, number, number, number];
     origins?: [number, number][];
     zIndex?: number;
+    mapWebServiceType?: MapWebServiceType;
+    // styles?
+
+    layer?: ol.layer.Layer;
 }
 
 export interface RasterLayerOptions extends LayerOptions {

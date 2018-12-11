@@ -1,6 +1,6 @@
 {
   "name": "cloudy-location",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "peerDependencies": {
     "vincijs": "^1.0.39",
     "ol-popup": "^3.0.0",

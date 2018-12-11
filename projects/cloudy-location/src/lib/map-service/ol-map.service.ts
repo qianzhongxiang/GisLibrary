@@ -93,11 +93,11 @@ export class OlMapService extends ObserverableWMediator {
         return this.DrawL;
     }
   }
-  constructor(private ConfigurationService: ConfigurationService, private FloorService: FloorService) {
+  constructor(private configurationService: ConfigurationService, private floorService: FloorService) {
     super();
     // init options of floor service
-    let mapConfig = this.ConfigurationService.MapConfig;
-    this.FloorService.SetOptions({
+    let mapConfig = this.configurationService.MapConfig;
+    this.floorService.SetOptions({
       layerOptions: {
         hostName: mapConfig.geoServerUrl
         , groupName: mapConfig.geoServerGroup, GWC: mapConfig.GWC, maxResolution: mapConfig.maxResolution
@@ -107,7 +107,7 @@ export class OlMapService extends ObserverableWMediator {
       , floors: (mapConfig.layers instanceof Array ? mapConfig.layers : [mapConfig.layers])
     });
     //listening to changing of floor, and call setFloor
-    this.FloorService.Bind(this.FloorService.Events.Changed, () => this.SetFloor());
+    this.floorService.Bind(this.floorService.Events.Changed, () => this.SetFloor());
   }
   public Rotate(rotation: number, opt_anchor?: ol.Coordinate) {
     this.Map.getView().rotate(rotation, opt_anchor);
@@ -167,10 +167,10 @@ export class OlMapService extends ObserverableWMediator {
   public AddLayer(layer: ol.layer.Layer, forPerFloor?: boolean) {
     this.addLayer(layer);
     if (forPerFloor) {
-      this.FloorService.AddLayers([layer], false);
+      this.floorService.AddLayers([layer], false);
     }
     else {
-      this.FloorService.AddLayers([layer]);
+      this.floorService.AddLayers([layer]);
     }
   }
   /**
@@ -247,7 +247,7 @@ export class OlMapService extends ObserverableWMediator {
    * @param element 
    */
   private EnvironmentConfig(element: HTMLElement) {
-    let mapConfig = this.ConfigurationService.MapConfig;
+    let mapConfig = this.configurationService.MapConfig;
     let control = new ol_PostionControl({ target: document.createElement('div'), projection: 'EPSG:3857' });
 
     let vo: olx.ViewOptions =// { zoom: 4, center: [0, 0] }
@@ -268,7 +268,7 @@ export class OlMapService extends ObserverableWMediator {
     this.InitLayers();
   }
   private InitLayers() {
-    this.FloorService.GetLayers().forEach(l => this.addLayer(l));
+    this.floorService.GetLayers().forEach(l => this.addLayer(l));
   }
   //region ZOOM
   /**
@@ -322,7 +322,7 @@ export class OlMapService extends ObserverableWMediator {
     if (points) {
       let pointArray: Array<[number, number]> = [];
       points.forEach(p => {
-        pointArray.push(ol_proj.transform([p.X, p.Y], this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg));
+        pointArray.push(ol_proj.transform([p.X, p.Y], this.configurationService.MapConfig.srs, this.configurationService.MapConfig.frontEndEpsg));
       });
       let feature = new ol_feature(new ol_lineString(pointArray));
       this.RouteL.getSource().addFeature(feature);
@@ -344,7 +344,7 @@ export class OlMapService extends ObserverableWMediator {
       const source = this.RangeL.getSource();
       const a: Array<[number, number]> = [];
       ps.forEach(p => a.push(ol_proj.transform([p.X, p.Y]
-        , this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg)));
+        , this.configurationService.MapConfig.srs, this.configurationService.MapConfig.frontEndEpsg)));
       const feature = new ol_feature(new ol_polygon([a]));
       source.addFeature(feature);
       return feature;
@@ -362,8 +362,8 @@ export class OlMapService extends ObserverableWMediator {
    * @param _sourceSrs is srs of point, by default is srs be setted by configuration file;
    */
   public Focus(point: [number, number], _sourceSrs?: string) {
-    point = ol_proj.transform(point, _sourceSrs || this.ConfigurationService.MapConfig.srs
-      , this.ConfigurationService.MapConfig.frontEndEpsg);
+    point = ol_proj.transform(point, _sourceSrs || this.configurationService.MapConfig.srs
+      , this.configurationService.MapConfig.frontEndEpsg);
     this.Map.getView().setCenter(point);
   }
 
@@ -421,21 +421,25 @@ export class OlMapService extends ObserverableWMediator {
    * @param callback the function to handle given features 
    * @param boxSelection the option with boolen type to launch box-selection. it is set true by default.
    */
-  public SelectInLayer(layers: Array<ol.layer.Vector>, callback: (features: Array<ol.Feature>) => void, boxSelection: boolean = true, multi: boolean = true): ol.interaction.Select {
-    let options: any = {
-      layers: layers,
-      multi: multi
-    };
-    if (multi) {
-      options.addCondition = ol_events_condition.click;
-      options.removeCondition = ol_events_condition.click;
-      options.condition = ol_events_condition.click;
+  public SelectInLayer(layers: Array<ol.layer.Vector>, callback: (features: Array<ol.Feature>) => void
+    , boxSelection: boolean = true, multi: boolean = true, id: string = '1'): ol.interaction.Select {
+    const interactions = this.Map.getInteractions()
+      , items = interactions.getArray().filter(i => i.get('levelId') == id);
+    if (items) {
+      items.forEach(i => this.Map.removeInteraction(i));
     }
-
-    let s = new ol_select(options);
+    const s = new ol_select({
+      layers: layers,
+      multi: multi,
+      addCondition: ol_events_condition.click,
+      removeCondition: ol_events_condition.click,
+      condition: multi ? ol_events_condition.click : ol_events_condition.singleClick,
+    });
     s.on('select', (e: ol.interaction.Select.Event) => {
       callback(e.selected);
     });
+    s.set('levelId', id);
+
     this.AddInteraction(s);
     if (boxSelection) {
       let fs = s.getFeatures();
@@ -466,12 +470,13 @@ export class OlMapService extends ObserverableWMediator {
    * @param outputFormat is  'application/json' by default
    * @param viewPramaters 
    */
-  public LoadWfs(callback: (layer: ol.layer.Vector) => void, gisServer: string, typeName: string, outputFormat: string = 'application/json', viewPramaters?: string) {
-    let pams = `service=wfs&version=1.1.0&request=GetFeature&typeNames=${typeName}&outputFormat=${outputFormat}&${viewPramaters}`;
+  public LoadWfs(callback: (layer: ol.layer.Vector) => void, gisServer: string, typeName: string
+    , outputFormat: string = 'application/json', viewPramaters?: string) {
+    const pams = `service=wfs&version=1.1.0&request=GetFeature&typeNames=${typeName}&outputFormat=${outputFormat}&${viewPramaters}`;
     new Ajax({ url: `${gisServer}/wfs?${pams}` }).done(json => {
-      let fs = new olFormatGeoJson().readFeatures(json);
+      const fs = new olFormatGeoJson().readFeatures(json);
       if (fs && fs.length > 0) {
-        let layer = new ol_layer_vector({
+        const layer = new ol_layer_vector({
           source: new ol_source_vector(),
           zIndex: 104,
           style: () => [new ol_style({ stroke: new ol_stroke({ width: 6, color: '#04cf87' }) })]
@@ -566,7 +571,8 @@ export class OlMapService extends ObserverableWMediator {
    * but if style is an array ,then all feature will apply same styles
    * @param id 
    */
-  public Draw(type?: 'Box' | 'LineString' | 'Circle' | 'Polygon', callback?: (feature) => void, styles?: (f: ol.Feature) => ol.style.Style[]
+  public Draw(type?: 'Box' | 'LineString' | 'Circle' | 'Polygon',
+    callback?: (feature: ol.Feature) => void, styles?: (f: ol.Feature) => ol.style.Style[]
     , features?: Array<ol.Feature>, id: string = '1', multi: boolean = false): ol.interaction.Interaction {
     this.DrawL.setStyle((f: ol.Feature) => {
       if (styles) { return styles(f); } else {
@@ -619,8 +625,8 @@ export class OlMapService extends ObserverableWMediator {
   public CreateFeature(type: 'LineString' | 'Circle' | 'Polygon', points: [number, number][], sourceSrs?: string): ol.Feature {
     let geom: ol.geom.Geometry;
     // epsg transform
-    points = points.map(p => ol_proj.transform(p, sourceSrs || this.ConfigurationService.MapConfig.srs
-      , this.ConfigurationService.MapConfig.frontEndEpsg));
+    points = points.map(p => ol_proj.transform(p, sourceSrs || this.configurationService.MapConfig.srs
+      , this.configurationService.MapConfig.frontEndEpsg));
     switch (type.toLowerCase()) {
       case 'linestring':
         geom = new ol_lineString(points);

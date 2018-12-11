@@ -12,6 +12,7 @@ export * from './utilities/enum';
 export * from './utilities/olProjConvert';
 export * from './utilities/config';
 export * from './utilities/LayerSwitcher';
+export * from './utilities/scaleLine';
 export * from './graphic';
 
 

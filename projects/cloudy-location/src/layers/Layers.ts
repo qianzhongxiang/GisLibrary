@@ -14,7 +14,7 @@ export interface LayerOptions {
     zIndex?: number;
     mapWebServiceType?: MapWebServiceType;
     // styles?
-
+    visable?: boolean;
     layer?: ol.layer.Layer;
 }
 

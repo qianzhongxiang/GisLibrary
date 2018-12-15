@@ -1,13 +1,13 @@
 import { IStyleOptions } from './graphics';
 
-import Style from 'ol/style/Style'
-import Circle from 'ol/style/Circle'
-import Fill from 'ol/style/Fill'
-import Stroke from 'ol/style/Stroke'
-import Text from 'ol/style/Text'
-import Icon from 'ol/style/Icon'
+import Style from 'ol/style/Style';
+import Circle from 'ol/style/Circle';
+import Fill from 'ol/style/Fill';
+import Stroke from 'ol/style/Stroke';
+import Text from 'ol/style/Text';
+import Icon from 'ol/style/Icon';
 
-export const STYLETYPE = 'styleType'
+export const STYLETYPE = 'styleType';
 export enum StyleType {
     point,
     text,
@@ -19,7 +19,7 @@ export enum StyleType {
 
 export abstract class Materials {
     public static GetPoint(options: IStyleOptions): ol.style.Style[] {
-        let img = this.GetCircleImage(options)
+        let img = this.GetCircleImage(options);
         let res = new Style({
             image: img,
             zIndex: options.zIndex
@@ -29,8 +29,8 @@ export abstract class Materials {
     }
     public static GetCircle(options: IStyleOptions, radius: number = 8): ol.style.Style[] {
         // implement scale
-        if (options.scale) radius = radius * options.scale
-        let img = this.GetCircleImage(options, radius)
+        if (options.scale) radius = radius * options.scale;
+        let img = this.GetCircleImage(options, radius);
         let res = new Style({
             image: img,
             zIndex: options.zIndex
@@ -44,7 +44,7 @@ export abstract class Materials {
             strokeWidth: 2,
             strokeColor: 'white',
             color: 'blue'
-        }, options)
+        }, options);
         return new Circle({
             radius: radius,
             fill: new Fill({ color: options.color }),
@@ -54,7 +54,7 @@ export abstract class Materials {
         });
     }
     public static GetIconImg(options: IStyleOptions, source: HTMLImageElement | HTMLCanvasElement | string, type: "img" | "src" = "src", size?: [number, number]): ol.style.Style[] {
-        let icon: ol.style.Icon
+        let icon: ol.style.Icon;
         if (source instanceof HTMLImageElement || source instanceof HTMLCanvasElement) type = "img";
         switch (type) {
             case "src":
@@ -65,7 +65,7 @@ export abstract class Materials {
                     scale: options.scale,
                     rotation: options.rotation,
                     offset: [options.offsetX || 0, options.offsetY || 0]
-                })
+                });
                 break;
             case "img":
                 icon = new Icon({
@@ -75,7 +75,7 @@ export abstract class Materials {
                     scale: options.scale,
                     rotation: options.rotation,
                     offset: [options.offsetX || 0, options.offsetY || 0]
-                })
+                });
                 break;
             default:
                 break;
@@ -93,7 +93,7 @@ export abstract class Materials {
         * @param options 
         */
     public static GetFontIcon(options: IStyleOptions): ol.style.Style[] {
-        let res = new Style({
+        const res = new Style({
             text: new Text({
                 offsetY: options.offsetY,
                 offsetX: options.offsetX,
@@ -110,8 +110,8 @@ export abstract class Materials {
         return [res];
     }
     public static GetText(options?: IStyleOptions): ol.style.Style[] {
-        options = Object.assign({ font: "400 .8rem San-serif" }, options)
-        let res = new Style({
+        options = Object.assign({ font: '400 .8rem San-serif' }, options);
+        const res = new Style({
             text: new Text({
                 offsetY: options.offsetY,
                 offsetX: options.offsetX,
@@ -122,7 +122,7 @@ export abstract class Materials {
                 scale: options.scale
             }),
             zIndex: options.zIndex
-        })
+        });
         res[STYLETYPE] = StyleType.text;
         return [res];
     }

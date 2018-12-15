@@ -22,7 +22,8 @@ export default (options: LayerOptions): ol.layer.Image => {
                         STYLES: '',
                         LAYERS: `${options.groupName}:Roads`
                     }
-                })
+                }),
+                visible: options.visable
             } as any);
             break;
         case MapWebServiceType.WFS:
@@ -38,7 +39,8 @@ export default (options: LayerOptions): ol.layer.Image => {
                         // +
                         // `bbox=${extent.join(',')},EPSG:3857'`;
                     }
-                })
+                }),
+                visible: options.visable
             } as any);
 
             break;

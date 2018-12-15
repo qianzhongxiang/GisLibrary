@@ -22,7 +22,8 @@ export default (options: LayerOptions): ol.layer.Image | ol.layer.Vector => {
                         STYLES: '',
                         LAYERS: `${options.groupName}:Regions`
                     }
-                })
+                }),
+                visible: options.visable
             } as any);
             break;
         case MapWebServiceType.WFS:
@@ -38,7 +39,8 @@ export default (options: LayerOptions): ol.layer.Image | ol.layer.Vector => {
                         // +
                         // `bbox=${extent.join(',')},EPSG:3857'`;
                     }
-                })
+                }),
+                visible: options.visable
             } as any);
 
             break;

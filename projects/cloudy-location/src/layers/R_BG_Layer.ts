@@ -33,6 +33,7 @@ export default (options: RasterLayerOptions): ol.layer.Tile => {
             projection: 'EPSG:3857',
             tileGrid: grid
         }),
+        visible: options.visable
         // maxResolution: options.maxResolution,
         // minResolution: options.minResolution
     } as any);

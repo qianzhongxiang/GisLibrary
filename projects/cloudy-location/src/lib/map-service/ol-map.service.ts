@@ -78,7 +78,7 @@ export class OlMapService extends ObserverableWMediator {
     return this._drawl;
   }
 
-  private DefaultStyle = new ol_style({ stroke: new ol_stroke({ width: 2, color: '#8ccf1c' }) });
+  public DefaultStyle = new ol_style({ stroke: new ol_stroke({ width: 2, color: '#8ccf1c' }) });
   /**
    * 获取矢量图层
    * @param type "route|range|draw"
@@ -571,7 +571,7 @@ export class OlMapService extends ObserverableWMediator {
    * but if style is an array ,then all feature will apply same styles
    * @param id 
    */
-  public Draw(type?: 'Box' | 'LineString' | 'Circle' | 'Polygon',
+  public Draw(type?: 'Box' | 'LineString' | 'Circle' | 'Polygon' | 'Point',
     callback?: (feature: ol.Feature) => void, styles?: (f: ol.Feature) => ol.style.Style[]
     , features?: Array<ol.Feature>, id: string = '1', multi: boolean = false): ol.interaction.Interaction {
     this.DrawL.setStyle((f: ol.Feature) => {

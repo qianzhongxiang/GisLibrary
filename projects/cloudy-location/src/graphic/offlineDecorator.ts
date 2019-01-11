@@ -1,5 +1,5 @@
-import { Decorator } from "./decorator";
-import { StyleType, Materials } from "./materials";
+import { Decorator } from './decorator';
+import { StyleType, Materials } from './materials';
 
 export class OfflineDecorator extends Decorator {
     protected Decorate(style: ol.style.Style, styleType: StyleType, styleName: string): ol.style.Style {
@@ -15,12 +15,12 @@ export class OfflineDecorator extends Decorator {
 
                 break;
             case StyleType.point: {
-                style.setImage(Materials.GetCircleImage({ color: "gray" }));
+                style.setImage(Materials.GetCircleImage({ color: 'gray' }));
             }
                 break;
             default: {
-                let fill = style.getFill();
-                if (!fill) break;
+                const fill = style.getFill();
+                if (!fill) { break; }
                 fill.setColor('gray');
             }
                 break;

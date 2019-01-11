@@ -17,7 +17,7 @@ import { DataItem, MsgEntity, Id_TypeGenerator } from './../../utilities/entitie
 import * as mqtt from 'mqtt';
 import * as jQuery from 'jquery';
 import { DeviceStatus } from '../../utilities/enum';
-class point extends BaseGraphic {
+class Point extends BaseGraphic {
   constructor() {
     super();
     this.Options.color = 'blue';
@@ -42,9 +42,9 @@ export class DeviceService extends ObserverableWMediator {
   private HighlightedId: string;
   public durTimes = 1;
   private Filter: (graphic: GraphicOutInfo) => boolean;
-  constructor(private ConfigurationService: ConfigurationService, private FloorService: FloorService) {
+  constructor(private configurationService: ConfigurationService, private floorService: FloorService) {
     super();
-    GetGraphicFactory().SetDef(point, 'base');
+    GetGraphicFactory().SetDef(Point, 'base');
     GetGraphicFactory().SetDef(HighlightDecorator, 'highlight');
     GetGraphicFactory().SetDef(OfflineDecorator, 'offline');
     GetGraphicFactory().SetDef(Decorator, 'decorator');
@@ -55,7 +55,7 @@ export class DeviceService extends ObserverableWMediator {
     });
     this.Layer.setZIndex(200);
     // listening to floor changed
-    this.FloorService.Bind(this.FloorService.Events.Changed, this.SetFloor.bind(this));
+    this.floorService.Bind(this.floorService.Events.Changed, this.SetFloor.bind(this));
   }
   private StyleFn(f: ol.Feature) {
     const id = f.get('uid'), type = f.get('type'), c = this.Obtain(id as string, type)
@@ -107,12 +107,12 @@ export class DeviceService extends ObserverableWMediator {
    * @param info 
    */
   private AddFeature(info: GraphicOutInfo, newF?: boolean) {
-
-    let idtype = Id_TypeGenerator(info.Id, info.Type), f;
-    if (!this.ConfigurationService.MapConfig.floorSwitcher) {
+    const idtype = Id_TypeGenerator(info.Id, info.Type);
+    let f;
+    if (!this.configurationService.MapConfig.floorSwitcher) {
       if (newF) {
-        let graphic = info.Graphic = GetGraphicFactory().GetComponent(`${info.Type}.${info.SubType}`);
-        let feature = graphic.GetGeom([info.Location.x, info.Location.y]);
+        const graphic = info.Graphic = GetGraphicFactory().GetComponent(`${info.Type}.${info.SubType}`);
+        const feature = graphic.GetGeom([info.Location.x, info.Location.y]);
         feature.setId(idtype);
         // feature.setId(info.Id);
         feature.set('uid', info.Id);
@@ -123,9 +123,9 @@ export class DeviceService extends ObserverableWMediator {
       return;
     }
 
-    if (info.Floor === undefined || info.Floor == this.FloorService.GetFloorNo()) {
-      let graphic = info.Graphic = GetGraphicFactory().GetComponent(`${info.Type}.${info.SubType}`);
-      let feature = graphic.GetGeom([info.Location.x, info.Location.y]);
+    if (info.Floor === undefined || info.Floor == this.floorService.GetFloorNo()) {
+      const graphic = info.Graphic = GetGraphicFactory().GetComponent(`${info.Type}.${info.SubType}`);
+      const feature = graphic.GetGeom([info.Location.x, info.Location.y]);
       feature.setId(idtype);
       // feature.setId(info.Id);
       feature.set('uid', info.Id);
@@ -202,13 +202,13 @@ export class DeviceService extends ObserverableWMediator {
      * @param duration
      */
   private ComponentMove(id: string, type: string, loc: { x: number; y: number; }): DeviceService { // TODO 若chain堆积太多 则必须对象位置需跳过前面tweens
-    let graphic: GraphicOutInfo, idtype = Id_TypeGenerator(id, type);
+    let graphic: GraphicOutInfo;
+    const idtype = Id_TypeGenerator(id, type);
     // TODO 判断位置如果相同不进行任何操作;
     if (graphic = this.Obtain(id, type)) {
-      let feature = this.VectorSource.getFeatureById(idtype);
-      if (feature) (feature.getGeometry() as ol.geom.Point).setCoordinates([loc.x, loc.y]);
-    }
-    else {
+      const feature = this.VectorSource.getFeatureById(idtype);
+      if (feature) { (feature.getGeometry() as ol.geom.Point).setCoordinates([loc.x, loc.y]); }
+    } else {
       console.log('err:' + + ' 在Coms中不存在');
     }
     return this;
@@ -221,40 +221,40 @@ export class DeviceService extends ObserverableWMediator {
    */
   public DataProcess(callback: (gif: GraphicOutInfo, type: DeviceStatus) => void
     , posiConvertor?: (posi: [number, number]) => [number, number], dataFilter?: (dataItem: DataItem) => boolean): DeviceService {
-    let mapConfig = this.ConfigurationService.MapConfig;
-    let type = mapConfig.locationConfig.wsType;
-    let url = mapConfig.locationConfig.locationURI;
+    const mapConfig = this.configurationService.MapConfig,
+      type = mapConfig.locationConfig.wsType,
+      url = mapConfig.locationConfig.locationURI;
     switch (type) {
       case 'ws':
         if (this.socket) { return this; }
         this.socket = new WebSocketor({ Url: url });
         this.socket.Open(evt => {
           try {
-            let datas = JSON.parse(evt.data);
+            const datas = JSON.parse(evt.data);
             this.Resolve(datas, callback, posiConvertor, dataFilter);
           } catch (error) {
-            LogHelper.Error(error)
+            LogHelper.Error(error);
           }
         }, () => {
           this.SetState(this.Events.WSOpened, this.socket);
         });
         // 离线socket
-        let msgWS = new WebSocketor({ Url: 'ws://223.68.186.220:3723' });
+        const msgWS = new WebSocketor({ Url: 'ws://223.68.186.220:3723' });
         msgWS.Open(evt => {
           try {
-            let datas = JSON.parse(evt.data);
-            let array = datas as Array<MsgEntity>
+            const datas = JSON.parse(evt.data),
+              array = datas as Array<MsgEntity>;
             array.forEach(i => {
-              let item = this.Obtain(i.Uid, i.DevType);
+              const item = this.Obtain(i.Uid, i.DevType);
               if (item && !item.Offline) {
                 item.Offline = true;
-                callback(item, DeviceStatus.Offline)
-                this.SetState(this.Events.DeviceUpdate, { data: item, type: DeviceStatus.Offline })
+                callback(item, DeviceStatus.Offline);
+                this.SetState(this.Events.DeviceUpdate, { data: item, type: DeviceStatus.Offline });
               }
-            })
+            });
             this.VectorSource.refresh();
           } catch (error) {
-            LogHelper.Error(error)
+            LogHelper.Error(error);
           }
         }, () => {
         });
@@ -306,12 +306,12 @@ export class DeviceService extends ObserverableWMediator {
    */
   public DevPositionInit(items: string, callback: (gif: GraphicOutInfo, type: DeviceStatus) => void
     , posiConvertor?: (posi: [number, number]) => [number, number]) {
-    if (!this.ConfigurationService.MapConfig.webService) { return; }
-    let url = this.ConfigurationService.MapConfig.webService + `/DeviceProfileGet?callback=?`;
+    if (!this.configurationService.MapConfig.webService) { return; }
+    const url = this.configurationService.MapConfig.webService + `/DeviceProfileGet?callback=?`;
     this.Jsonp(url, { items: items }, (s) => {
       if (!s) { return; }
-      let ds: Array<{ DevState: number, LocationItem: DataItem }> = JSON.parse(s);
-      let data: Array<DataItem> = ds.map(d => { d.LocationItem.Offline = (d.DevState == DeviceStatus.Offline); return d.LocationItem; });
+      const ds: Array<{ DevState: number, LocationItem: DataItem }> = JSON.parse(s);
+      const data: Array<DataItem> = ds.map(d => { d.LocationItem.Offline = (d.DevState == DeviceStatus.Offline); return d.LocationItem; });
       this.Resolve(data, callback, posiConvertor);
     });
   }
@@ -319,7 +319,7 @@ export class DeviceService extends ObserverableWMediator {
   private Jsonp(url: string, data: any, callback: (data: string) => void) {
     jQuery.ajax(url, {
       type: 'GET', dataType: 'jsonp', data: data, success: callback, error: () => {
-        console.log('err')
+        console.log('err');
       }
     });
   }
@@ -330,14 +330,15 @@ export class DeviceService extends ObserverableWMediator {
     , posiConvertor?: (posi: [number, number]) => [number, number], dataFilter?: (dataItem: DataItem) => boolean) {
     for (let i = 0; i < datas.length; i++) {
       const data: DataItem = datas[i], now = new Date();
-      if (data.X == 0 && data.Y == 0 || (dataFilter && !dataFilter(data))) { continue; }
+      if (!data.X && !data.Y || (dataFilter && !dataFilter(data))) { continue; }
       let profile: GraphicOutInfo, type: DeviceStatus;
       let ps: [number, number] = [data.X, data.Y];
       // ps = ol_proj.transform(ps, GetProjByEPSG(0), 'EPSG:3857')// 'EPSG:4326'
       if (posiConvertor) {
         ps = posiConvertor(ps);
       }
-      ps = ol_proj.transform(ps, data.EPSG !== undefined ? GetProjByEPSG(data.EPSG) : this.ConfigurationService.MapConfig.srs, this.ConfigurationService.MapConfig.frontEndEpsg);
+      ps = ol_proj.transform(ps, data.EPSG !== undefined ?
+        GetProjByEPSG(data.EPSG) : this.configurationService.MapConfig.srs, this.configurationService.MapConfig.frontEndEpsg);
 
       if (!(profile = this.Obtain(data.UniqueId, data.Type))) {
         profile = {
@@ -381,7 +382,7 @@ export class DeviceService extends ObserverableWMediator {
   SetShowItem(filter: (graphic: GraphicOutInfo) => boolean) {// filter: Array<[string, boolean]> | ((graphic: GraphicOutInfo) => boolean)
     this.Filter = filter;
     for (let c in this.Coms) {
-      let i: GraphicOutInfo = this.Coms[c];
+      const i: GraphicOutInfo = this.Coms[c];
       i.Visable = filter(i);
     }
     this.Layer.getSource().refresh();

@@ -8,94 +8,96 @@ import { Component, OnInit, ViewChild, ElementRef, Optional, AfterViewInit, Inpu
 import { AssetService } from '../asset-service/asset.service';
 import { RequestMsgObject } from './../../utilities/entities';
 import { DeviceStatus } from '../../utilities/enum';
-import ZoomSlider from 'ol/control/ZoomSlider'
-import Zoom from 'ol/control/Zoom'
+import ZoomSlider from 'ol/control/ZoomSlider';
+import Zoom from 'ol/control/Zoom';
 @Component({
   selector: 'cl-map',
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.css']
 })
 export class MapComponent implements OnInit, AfterViewInit {
-  @ViewChild("div") container: ElementRef
+  @ViewChild('div') container: ElementRef;
   @Input()
-  public DeviceLay: boolean
+  public DeviceLay: boolean;
   @Input()
-  public DeviceReceive: boolean
+  public DeviceReceive: boolean;
   @Input()
   /** be defined as url if Popup is set a string */
-  public Popup: ((id: string, type: string) => string) | string | Array<string>
+  public Popup: ((id: string, type: string) => string) | string | Array<string>;
   @Input()
-  public AssetClick: (id: string, type: string) => void
+  public AssetClick: (id: string, type: string) => void;
 
-  @Input("zoomslider")
-  public Zoomslider: boolean
+  @Input('zoomslider')
+  public Zoomslider: boolean;
 
   ngAfterViewInit(): void {
-    this.OlMapService.Show({ target: this.container.nativeElement })
+    this.OlMapService.Show({ target: this.container.nativeElement });
     if (this.DeviceService) {
-      let layer = this.DeviceService.GetLayer();
+      const layer = this.DeviceService.GetLayer();
       if (this.DeviceReceive) {
         this.OlMapService.AddLayer(layer, true);
-        this.DeviceService.Bind(this.DeviceService.Events.WSOpened, this.InitWSType.bind(this))
+        this.DeviceService.Bind(this.DeviceService.Events.WSOpened, this.InitWSType.bind(this));
         this.DevPositionInit();
-        this.DeviceService.DataProcess(this.DataProcessCallback.bind(this))
+        this.DeviceService.DataProcess(this.DataProcessCallback.bind(this));
       } else if (this.DeviceLay) {
         this.OlMapService.AddLayer(layer, true);
       }
-      if (this.Popup)
+      if (this.Popup) {
         this.ShowPopup(layer);
+      }
       if (this.AssetClick) {
         this.OlMapService.SelectInLayer([layer], (fs) => {
-          let f = fs[0]
-          if (!f) return;
-          let id = f.getId() as string, type = f.get("type")
+          const f = fs[0];
+          if (!f) { return; }
+          const id = f.getId() as string, type = f.get('type');
           this.AssetClick(id, type);
-        }, true, false)
+        }, true, false);
       }
     }
     this.InitZoomslider();
   }
   private InitZoomslider() {
     if (this.Zoomslider) {
-      this.OlMapService.AddControl(new Zoom())
-      this.OlMapService.AddControl(new ZoomSlider({}))
+      this.OlMapService.AddControl(new Zoom());
+      this.OlMapService.AddControl(new ZoomSlider({}));
     }
   }
   private ShowPopup(layer) {
     this.OlMapService.AddPopup(f => {
-      let id = f.getId() as string, type = f.get("type")
+      const id = f.getId() as string, type = f.get('type');
       // return `${id}_${type}`;
-      let str = "";
+      let str = '';
       if (typeof this.Popup === 'string') {
         try {
-          new Ajax({ url: this.Popup, data: { uid: id, type: type }, contentType: "json", async: false })
+          new Ajax({ url: this.Popup, data: { uid: id, type: type }, contentType: 'json', async: false })
             .done(d => {
               if (d.IsSuccess && d.Data) {
-                let array = d.Data as Array<string>;
-                str = `<div><p>${array.join("</br>")}</p></div>`
+                const array = d.Data as Array<string>;
+                str = `<div><p>${array.join('</br>')}</p></div>`;
               }
-            })
-        }
-        catch (e) {
-          LogHelper.Error(e)
+            });
+        } catch (e) {
+          LogHelper.Error(e);
         }
       } else if (typeof this.Popup === 'function') {
         str = this.Popup(id, type);
       } else if (this.Popup instanceof Array) {
-        str = `<div><p>${this.Popup.join("</br>")}</p></div>`
+        str = `<div><p>${this.Popup.join('</br>')}</p></div>`;
       }
       return str;
     }, layer);
   }
-  constructor(public ConfigurationService: ConfigurationService, private OlMapService: OlMapService, @Optional() private DeviceService: DeviceService, @Optional() private AssetService: AssetService) { }
+  constructor(public ConfigurationService: ConfigurationService, private OlMapService: OlMapService
+    , @Optional() private DeviceService: DeviceService, @Optional() private AssetService: AssetService) { }
 
   private DataProcessCallback(gif: GraphicOutInfo, type: DeviceStatus) {
     switch (type) {
       case DeviceStatus.NewOffline:
       case DeviceStatus.New:
-        let info = this.AssetService ? this.AssetService.Get(gif.Id, gif.Type) : undefined;
-        if (!info) gif.Title = gif.Id;
-        else {
+        const info = this.AssetService ? this.AssetService.Get(gif.Id, gif.Type) : undefined;
+        if (!info) {
+          gif.Title = gif.Id;
+        } else {
           gif.Title = info.Title;
           gif.Color = info.Color;
           gif.SubType = info.Category;
@@ -120,7 +122,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
   private DevPositionInit() {
     let as = this.AssetService.GetAssets().map(a => a.Id_Type);
-    this.DeviceService.DevPositionInit(as.join(","), this.DataProcessCallback.bind(this))
+    this.DeviceService.DevPositionInit(as.join(','), this.DataProcessCallback.bind(this));
   }
   // public GetSlider(): HTMLElement {
   //   let slider = (this.container.nativeElement as HTMLDivElement).getElementsByClassName("ol-zoomslider")[0]

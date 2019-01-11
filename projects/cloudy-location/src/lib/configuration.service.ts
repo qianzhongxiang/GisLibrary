@@ -36,7 +36,9 @@ export class ConfigurationService {
     geoServerGroup: 'LS',
     frontEndEpsg: 'EPSG:3857',
     GWC: true,
-    floorSwitcher: true
+    floorSwitcher: true,
+    panable: true,
+    mouseWheelZoom: true
   };
   private assetConfig: AssetConfig = {
     assetProfileUrl: '/assets/local-assets.json',

@@ -1,8 +1,9 @@
-import Feature from 'ol/feature'
-import LineString from 'ol/geom/LineString'
+import Feature from 'ol/feature';
+import LineString from 'ol/geom/LineString';
 
 export class Tracker {
     protected OldPoint: { x: number, y: number, z: number };
+    public AtMostPoints: number;
     protected Features: ol.Feature[];
     constructor(protected thickness: number = 3, startPoint: [number, number][]) {
         this.Features = [new Feature(new LineString(startPoint))];
@@ -14,7 +15,12 @@ export class Tracker {
         return this.Features[this.Features.length - 1];
     }
     public AddPoint(point: [number, number]): Tracker {
-        (this.GetFeature().getGeometry() as ol.geom.LineString).appendCoordinate(point);
+        const line = (this.GetFeature().getGeometry() as ol.geom.LineString);
+
+        line.appendCoordinate(point);
+        if (this.AtMostPoints && line.getCoordinates().length > this.AtMostPoints) {
+            line.getCoordinates().splice(0, 1);
+        }
         return this;
     }
     public Broke() {
@@ -23,7 +29,10 @@ export class Tracker {
     public AddPoints(points: [number, number][]): Tracker {
         const geom = this.GetFeature().getGeometry() as ol.geom.LineString;
         points.forEach(p => geom.appendCoordinate(p));
-
+        const len = geom.getCoordinates().length;
+        if (this.AtMostPoints && len > this.AtMostPoints) {
+            geom.getCoordinates().splice(0, len - this.AtMostPoints);
+        }
         return this;
     }
     public Simplify(number: number) {

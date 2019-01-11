@@ -59,6 +59,9 @@ export class HistoryService {
   public GetData(datas: Array<{ uid: string, type: string, sTime: string, eTime: string }>,
     callback?: (data: Array<DataItem>) => void, corsType: 'AccessControl' | 'jsonp' = 'jsonp', noInterval: boolean = false) {
     this.Clean();
+    if (!datas.length) {
+      return;
+    }
     const url = this.configurationService.MapConfig.webService + `/HistoryGet`
       , index = 1, count = 200;
     let dataIndex = 0, beginTime: Date;
@@ -68,6 +71,9 @@ export class HistoryService {
     // { uid: "352544071943238", type: "SF", stime: sTime.toISOString(), etime: eTime.toISOString(), index: 1, count: 200 };
     const cb = ((ds: string | Array<DataItem>) => {
       if (typeof ds === 'string') { ds = JSON.parse(ds) as Array<DataItem>; }
+      ds = ds.sort((s1, s2) => {
+        return s1.SendTime > s2.SendTime ? 1 : -1;
+      });
       let oneMinData: DataItem[];
       if (noInterval) {
         oneMinData = ds.filter(d => {

@@ -1,43 +1,43 @@
-import { Composit, Singleton, IComposit, Extend } from "vincijs";
-import { Geometries } from "./geometries";
+import { Composit, Singleton, IComposit, Extend } from 'vincijs';
+import { Geometries } from './geometries';
 
 export interface IStyleOptions {
-    color?: string
-    content?: string
+    color?: string;
+    content?: string;
     /**
      * by default, true
      */
-    visable?: boolean
-    rotation?: number
-    zIndex?: number
-    font?: string
-    strokeWidth?: number
-    strokeColor?: string
-    size?: number
-    offsetX?: number
-    offsetY?: number
-    scale?: number
+    visable?: boolean;
+    rotation?: number;
+    zIndex?: number;
+    font?: string;
+    strokeWidth?: number;
+    strokeColor?: string;
+    size?: number;
+    offsetX?: number;
+    offsetY?: number;
+    scale?: number;
 }
 
 export interface IGraphic extends IComposit {
-    Style(): ol.style.Style[]
-    GetGeom(position: [number, number], type?: string): ol.Feature
-    AssignOption(options: IStyleOptions): IStyleOptions
+    Style(): ol.style.Style[];
+    GetGeom(position: [number, number], type?: string): ol.Feature;
+    AssignOption(options: IStyleOptions): IStyleOptions;
 }
 
 export abstract class Graphic extends Composit implements IGraphic {
-    public Events = { OnLoaded: "onloaded" }
+    public Events = { OnLoaded: 'onloaded' };
     protected Graphic: any;
-    public Loaded = false
+    public Loaded = false;
     // constructor(...composits: IGraphic[]) {
     //     super();
     //     if (composits)
     //         composits.forEach(c => this.Add(c));
     // }
     protected Options: IStyleOptions = {
-        color: "blue", rotation: 0, font: "Bold .75rem Arial",
-        strokeWidth: 3, strokeColor: "white"
-    }
+        color: 'blue', rotation: 0, font: 'Bold .75rem Arial',
+        strokeWidth: 3, strokeColor: 'white'
+    };
     // public Parent(): any {
     //     alert("共享部件没有显示指定父部件");
     // }
@@ -46,15 +46,15 @@ export abstract class Graphic extends Composit implements IGraphic {
     }
 
     public AssignOption(options: IStyleOptions): IStyleOptions {
-        return this.Options = Extend(this.Options, options)
+        return this.Options = Extend(this.Options, options);
     }
 
     public Style(): ol.style.Style[] {
-        if (!this.Children || this.Children.length <= 0) return [];
-        let res: ol.style.Style[] = []
+        if (!this.Children || this.Children.length <= 0) { return []; }
+        const res: ol.style.Style[] = [];
         this.Children.forEach((c: IGraphic) => {
-            res.push(...c.Style())
-        })
+            res.push(...c.Style());
+        });
         return res;
     }
 
@@ -67,55 +67,58 @@ export interface IGraphicFactory {
      * get coincident component, ":[prop]=value" does not be supply currently.
      * @param name format:type.subtype:[prop]=value, subtype can be undefined but can not be ''
      */
-    GetComponent(name: string): IGraphic
+    GetComponent(name: string): IGraphic;
     /**
      * get coincident component, ":[prop]=value" does not be supply currently.
      * @param type 
      * @param name format:type.subtype:[prop]=value, subtype can be undefined but can not be ''
      */
-    SetComponent(type: typeof Composit, name: string): void
+    SetComponent(type: typeof Composit, name: string): void;
     /**
      * whether is it existent in defaults 
      * @param name 
      */
-    DefsContains(name: string): boolean
-    GetDef(name: string): IGraphic
-    SetDef(type: typeof Composit, name: string): void
+    DefsContains(name: string): boolean;
+    GetDef(name: string): IGraphic;
+    SetDef(type: typeof Composit, name: string): void;
 }
 class GraphicFactory implements IGraphicFactory {
     // private Types: { [key: string]: new () => Graphic } = {}
-    private Tps: { [key: string]: ({ [key: string]: (new () => IGraphic) } | (new () => IGraphic)) } = {}
-    private Defs: { [key: string]: new () => IGraphic } = {}
-    private Pool: { [key: string]: IGraphic } = {}
-    private DefPool: { [key: string]: IGraphic } = {}
+    private Tps: { [key: string]: ({ [key: string]: (new () => IGraphic) } | (new () => IGraphic)) } = {};
+    private Defs: { [key: string]: new () => IGraphic } = {};
+    private Pool: { [key: string]: IGraphic } = {};
+    private DefPool: { [key: string]: IGraphic } = {};
     SetComponent(type: typeof Composit, name: string): void {
         // name = name || type.name.substr(0, name.length - 7);
-        name = name.toLowerCase()
-        let array = name.split('.');
-        if (!this.Tps[array[0]]) this.Tps[array[0]] = {}
+        name = name.toLowerCase();
+        const array = name.split('.');
+        if (!this.Tps[array[0]]) { this.Tps[array[0]] = {}; }
         if (array[1]) {
-            this.Tps[array[0]][array[1]] = type as any
+            this.Tps[array[0]][array[1]] = type as any;
         } else {
-            this.Tps[array[0]][''] = type as any
+            this.Tps[array[0]][''] = type as any;
         }
-        this.Pool[name] = undefined
+        this.Pool[name] = undefined;
     }
     /**
      * gain coincident Component , ":[prop]=value" does not be supply currently.
      * @param name  format:type.subtype:[prop]=value, subtype can be undefined but can not be ''
      */
     GetComponent(name: string): IGraphic {
-        if (!name)
-            return this.GetDef('base')
+        if (!name) {
+            return this.GetDef('base');
+        }
         name = name.toLowerCase();
-        if (this.Pool[name])
-            return this.Pool[name]
-        let array = name.split(".").map(i => i.toLowerCase());
-        let type: new () => IGraphic
+        if (this.Pool[name]) {
+            return this.Pool[name];
+        }
+        const array = name.split('.').map(i => i.toLowerCase());
+        let type: new () => IGraphic;
         //!type ||(!type.subType&&!type.'') return basic graphic
-        if (!this.Tps[array[0]] || (!(type = this.Tps[array[0]][array[1]]) && !(type = this.Tps[array[0]][''])))
-            return this.GetDef('base')
-        return this.Pool[name] = new type()
+        if (!this.Tps[array[0]] || (!(type = this.Tps[array[0]][array[1]]) && !(type = this.Tps[array[0]]['']))) {
+            return this.GetDef('base');
+        }
+        return this.Pool[name] = new type();
     }
 
     DefsContains(name: string): boolean {
@@ -125,9 +128,9 @@ class GraphicFactory implements IGraphicFactory {
         return this.DefPool[name] ? this.DefPool[name] : (this.DefPool[name] = new this.Defs[name]() as IGraphic);
     }
     SetDef(type: typeof Composit, name: string): void {
-        name = name.toLowerCase()
+        name = name.toLowerCase();
         this.Defs[name] = type as any;
-        this.DefPool[name] = undefined
+        this.DefPool[name] = undefined;
     }
 }
 
@@ -135,29 +138,29 @@ export interface GraphicOutInfo {
     /**
      * Id_type
      */
-    UniqueKey?: string
-    Location: { x: number, y: number }
-    Time?: Date | string
-    ReveiveTime: Date
-    Graphic?: IGraphic
-    Id: string
-    Parent: IGraphic
+    UniqueKey?: string;
+    Location: { x: number, y: number };
+    Time?: Date | string;
+    ReveiveTime: Date;
+    Graphic?: IGraphic;
+    Id: string;
+    Parent: IGraphic;
     /**
      * 楼层
      */
-    Floor?: number
-    Title?: string
-    Type: string
-    SubType?: string
+    Floor?: number;
+    Title?: string;
+    Type: string;
+    SubType?: string;
     // Path?: Tracker
-    PArray?: Array<{ x: number, y: number, dur: number, time: string }>
-    AllPs?: Array<{ x: number, y: number, dur: number, time: string }>
-    Duration?: number
-    Color?: string
-    Visable?: boolean
-    Offline?: boolean
-    Direction?: number
-    Repairing?: boolean
+    PArray?: Array<{ x: number, y: number, dur: number, time: string }>;
+    AllPs?: Array<{ x: number, y: number, dur: number, time: string }>;
+    Duration?: number;
+    Color?: string;
+    Visable?: boolean;
+    Offline?: boolean;
+    Direction?: number;
+    Repairing?: boolean;
 }
 /**
  * this is a function to get GraphicFactory with "singleton" parton

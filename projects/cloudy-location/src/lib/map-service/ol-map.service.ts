@@ -18,7 +18,9 @@ import ol_lineString from 'ol/geom/LineString';
 import ol_circle from 'ol/geom/Circle';
 import ol_draw from 'ol/interaction/Draw';
 import ol_select from 'ol/interaction/Select';
+import ol_interaction from 'ol/interaction';
 import ol_PostionControl from 'ol/control/mouseposition';
+import ol_control from 'ol/control';
 import ol_box_selection from 'ol/interaction/DragBox';
 import ol_events_condition from 'ol/events/condition';
 import olpopup from 'ol-popup';
@@ -96,7 +98,7 @@ export class OlMapService extends ObserverableWMediator {
   constructor(private configurationService: ConfigurationService, private floorService: FloorService) {
     super();
     // init options of floor service
-    let mapConfig = this.configurationService.MapConfig;
+    const mapConfig = this.configurationService.MapConfig;
     this.floorService.SetOptions({
       layerOptions: {
         hostName: mapConfig.geoServerUrl
@@ -106,7 +108,7 @@ export class OlMapService extends ObserverableWMediator {
       }
       , floors: (mapConfig.layers instanceof Array ? mapConfig.layers : [mapConfig.layers])
     });
-    //listening to changing of floor, and call setFloor
+    // listening to changing of floor, and call setFloor
     this.floorService.Bind(this.floorService.Events.Changed, () => this.SetFloor());
   }
   public Rotate(rotation: number, opt_anchor?: ol.Coordinate) {
@@ -145,6 +147,11 @@ export class OlMapService extends ObserverableWMediator {
     }
     return style;
   }
+
+  /**
+   * 显示地图
+   * @param data 包含所寄宿html元素
+   */
   public Show(data: { target: HTMLElement }) {
     this.EnvironmentConfig(data.target);
   }
@@ -152,10 +159,10 @@ export class OlMapService extends ObserverableWMediator {
    * set floor info
    */
   public SetFloor() {
-    //remove all layer even though drawing layer
+    // remove all layer even though drawing layer
     [...this.Map.getLayers().getArray()]
       .forEach(l => this.Map.removeLayer(l));
-    //add layers from new floor
+    // add layers from new floor
     this.InitLayers();
     this.SetState(this.Events.FloorChanged);
   }
@@ -168,8 +175,7 @@ export class OlMapService extends ObserverableWMediator {
     this.addLayer(layer);
     if (forPerFloor) {
       this.floorService.AddLayers([layer], false);
-    }
-    else {
+    } else {
       this.floorService.AddLayers([layer]);
     }
   }
@@ -183,7 +189,7 @@ export class OlMapService extends ObserverableWMediator {
     this.Map.removeLayer(layer);
   }
   public AddOverlay(options: olx.OverlayOptions): ol.Overlay {
-    let o = new overlay(options);
+    const o = new overlay(options);
     this.Map.addOverlay(o);
     return o;
   }
@@ -247,13 +253,14 @@ export class OlMapService extends ObserverableWMediator {
    * @param element 
    */
   private EnvironmentConfig(element: HTMLElement) {
-    let mapConfig = this.configurationService.MapConfig;
-    let control = new ol_PostionControl({ target: document.createElement('div'), projection: 'EPSG:3857' });
+    const mapConfig = this.configurationService.MapConfig;
+    const control = new ol_PostionControl({ target: document.createElement('div'), projection: 'EPSG:3857' });
 
-    let vo: olx.ViewOptions =// { zoom: 4, center: [0, 0] }
-    {
-      center: ol_proj.transform(mapConfig.centerPoint as [number, number], mapConfig.centerSrs, mapConfig.frontEndEpsg), zoom: mapConfig.zoom,
-      zoomFactor: mapConfig.zoomfactor, minResolution: mapConfig.minResolution, maxResolution: mapConfig.maxResolution,
+    const vo: olx.ViewOptions = {
+      center: ol_proj.transform(mapConfig.centerPoint as [number, number], mapConfig.centerSrs
+        , mapConfig.frontEndEpsg), zoom: mapConfig.zoom,
+      zoomFactor: mapConfig.zoomfactor, minResolution: mapConfig.minResolution
+      , maxResolution: mapConfig.maxResolution,
       resolutions: mapConfig.resolutions
     };
     if (mapConfig.zoomrange) {
@@ -261,16 +268,20 @@ export class OlMapService extends ObserverableWMediator {
       vo.maxZoom = mapConfig.zoomrange[1];
     }
     this.Map = new ol_Map({
-      controls: [control],
+      //  controls: ol_control.defaults({ zoomOptions: { zoomInLabel: '+', zoomOutLabel: '-' } }),
       target: element,
-      view: new ol_View(vo)
+      view: new ol_View(vo),
+      interactions: ol_interaction.defaults({
+        dragPan: mapConfig.panable, doubleClickZoom: false,
+        mouseWheelZoom: mapConfig.mouseWheelZoom
+      }),
     });
     this.InitLayers();
   }
   private InitLayers() {
     this.floorService.GetLayers().forEach(l => this.addLayer(l));
   }
-  //region ZOOM
+  // region ZOOM
   /**
    * 
    */
@@ -280,7 +291,7 @@ export class OlMapService extends ObserverableWMediator {
   public set Zoom(value: number) {
     this.Map.getView().setZoom(value);
   }
-  //endregion
+  // endregion
   /**
    * 
    * @param callback 
@@ -293,7 +304,7 @@ export class OlMapService extends ObserverableWMediator {
       layers: [layer]
     });
     s.on('select', (e: ol.interaction.Select.Event) => {
-      let f = e.selected[0];
+      const f = e.selected[0];
       if (f) {
         popup.show((f.getGeometry() as ol.geom.Point).getCoordinates(), callback(e.selected[0]));
       }
@@ -315,16 +326,15 @@ export class OlMapService extends ObserverableWMediator {
       return route;
     }
     let points: Array<{ X: number, Y: number }>;
-    if (typeof route === 'string') { points = JSON.parse(route); }
-    else {
+    if (typeof route === 'string') { points = JSON.parse(route); } else {
       points = route;
     }
     if (points) {
-      let pointArray: Array<[number, number]> = [];
+      const pointArray: Array<[number, number]> = [];
       points.forEach(p => {
         pointArray.push(ol_proj.transform([p.X, p.Y], this.configurationService.MapConfig.srs, this.configurationService.MapConfig.frontEndEpsg));
       });
-      let feature = new ol_feature(new ol_lineString(pointArray));
+      const feature = new ol_feature(new ol_lineString(pointArray));
       this.RouteL.getSource().addFeature(feature);
       return feature;
     } else { LogHelper.Error('DrawRoute():route is invalid'); }
@@ -447,7 +457,7 @@ export class OlMapService extends ObserverableWMediator {
         condition: ol_events_condition.platformModifierKeyOnly,
       });
       bs.on('boxend', () => {
-        let extent = bs.getGeometry().getExtent();
+        const extent = bs.getGeometry().getExtent();
         layers.forEach(l => {
           l.getSource().forEachFeatureIntersectingExtent(extent, f => {
             if (fs.getArray().indexOf(f) == -1) {

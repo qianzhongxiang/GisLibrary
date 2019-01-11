@@ -13,6 +13,8 @@ export * from './utilities/olProjConvert';
 export * from './utilities/config';
 export * from './utilities/LayerSwitcher';
 export * from './utilities/scaleLine';
+export * from './utilities/tools';
+export * from './layers/Layers';
 export * from './graphic';
 
 

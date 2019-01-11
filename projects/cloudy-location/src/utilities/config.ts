@@ -58,6 +58,8 @@ export interface MapConifg {
     'zoom'?: number;
     'zoomrange'?: [number, number];
     'zoomfactor'?: number;
+    'panable'?: boolean;
+    'mouseWheelZoom'?: boolean;
     'maxResolution'?: number;
     'minResolution'?: number;
     'resolutions'?: number[];
